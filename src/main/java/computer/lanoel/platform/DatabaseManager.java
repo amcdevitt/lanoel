@@ -58,6 +58,7 @@ public class DatabaseManager {
         try {
         	URL url = Resources.getResource("database/mysql/createDatabase.sql");
     		String res = Resources.toString(url, Charsets.UTF_8);
+    		System.out.println("Sql to run:\n" + res);
     		String[] sqls = res.split(";");
     		
     		for(String sql : sqls)
