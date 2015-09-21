@@ -12,6 +12,6 @@ RUN mvn package
 
 RUN mv /code/target/*.jar .
 
-EXPOSE 9000
+EXPOSE 80 8080
 
 ENTRYPOINT ["java", "-jar", "lanoel-0.1.0.jar"]
