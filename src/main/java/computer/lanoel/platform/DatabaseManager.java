@@ -296,7 +296,7 @@ public class DatabaseManager {
 		updateSql.append("GameKey=?,");
 		updateSql.append("VoteNumber=?");
 		
-		whereSql.append(" WHERE GameKey=?;");
+		whereSql.append(" WHERE VoteKey=?;");
 		return updateSql.append(whereSql).toString();
 	}
 	
@@ -392,7 +392,7 @@ public class DatabaseManager {
 			if(votes == null) return personToReturn;
 			for(Vote vote : votes)
 			{
-				if(vote.getVoteNumber() == 3)
+				if(vote.getVoteNumber() == 1)
 				{
 					personToReturn.setGameVote1(getGame(vote.getGameKey()).getGameName());
 				}
@@ -402,7 +402,7 @@ public class DatabaseManager {
 					personToReturn.setGameVote2(getGame(vote.getGameKey()).getGameName());
 				}
 				
-				if(vote.getVoteNumber() == 1)
+				if(vote.getVoteNumber() == 3)
 				{
 					personToReturn.setGameVote3(getGame(vote.getGameKey()).getGameName());
 				}

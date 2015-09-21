@@ -180,7 +180,9 @@ public class CommonController {
     				throws NumberFormatException, Exception
     { 
     	if(vote.getGameKey() == null) throw new BadRequestException("no game provided");
-    	if(vote.getPersonKey() == null) throw new BadRequestException("no person provided");
+    	if(personKey == null) throw new BadRequestException("no person provided");
+    	
+    	vote.setPersonKey(personKey);
     	
     	if(ServiceUtils.storage().getGame(vote.getGameKey()) == null)
     	{
@@ -198,9 +200,10 @@ public class CommonController {
     	}
     	
     	List<Vote> votesForPerson = ServiceUtils.storage().getVotesForPerson(vote.getPersonKey());
-    	if(votesForPerson.isEmpty())
+    	if(votesForPerson == null || votesForPerson.isEmpty())
     	{
     		ServiceUtils.storage().insertVote(vote);
+    		return new ResponseEntity<String>("Vote counted", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     	}
     	else
     	{
@@ -217,6 +220,5 @@ public class CommonController {
     		ServiceUtils.storage().insertVote(vote);
     		return new ResponseEntity<String>("Vote counted", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     	}
-    	return new ResponseEntity<String>("Error voting!", HttpHelper.commonHttpHeaders(), HttpStatus.BAD_REQUEST);
     }
 }
