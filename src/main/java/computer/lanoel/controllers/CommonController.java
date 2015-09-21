@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -102,20 +103,23 @@ public class CommonController {
     		method = RequestMethod.POST, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Game> manageGame(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders, Game game) 
+    		@RequestHeader(required = false) HttpHeaders requestHeaders, @RequestBody Game game) 
     				throws NumberFormatException, Exception
     { 
     	List<Game> currentGames = ServiceUtils.storage().getGameList();
-    	for(Game currentGame : currentGames)
+    	if(currentGames != null && !currentGames.isEmpty())
     	{
-    		if(game.getGameName() == currentGame.getGameName())
-    		{
-    			game.setGameKey(currentGame.getGameKey());
-    			ServiceUtils.storage().updateGame(game);
-    			return new ResponseEntity<Game>(game, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
-    		}
+    		for(Game currentGame : currentGames)
+	    	{
+	    		if(game.getGameName().equals(currentGame.getGameName()))
+	    		{
+	    			game.setGameKey(currentGame.getGameKey());
+	    			ServiceUtils.storage().updateGame(game);
+	    			return new ResponseEntity<Game>(game, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+	    		}
+	    	}
     	}
-    	ServiceUtils.storage().insertGame(game);
+       	ServiceUtils.storage().insertGame(game);
     	return new ResponseEntity<Game>(game, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     }
     
@@ -124,18 +128,21 @@ public class CommonController {
     		method = RequestMethod.POST, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Long> managePerson(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders, Person person) 
+    		@RequestHeader(required = false) HttpHeaders requestHeaders, @RequestBody Person person) 
     				throws NumberFormatException, Exception
     { 
     	List<Person> currentPersons = ServiceUtils.storage().getPersonList();
-    	for(Person currentPerson : currentPersons)
+    	if(currentPersons != null && !currentPersons.isEmpty())
     	{
-    		if(person.getPersonName() == currentPerson.getPersonName())
-    		{
-    			person.setPersonKey(currentPerson.getPersonKey());
-    			ServiceUtils.storage().updatePerson(person);
-    			return new ResponseEntity<Long>(person.getPersonKey(), HttpHelper.commonHttpHeaders(), HttpStatus.OK);
-    		}
+	    	for(Person currentPerson : currentPersons)
+	    	{
+	    		if(person.getPersonName().equals(currentPerson.getPersonName()))
+	    		{
+	    			person.setPersonKey(currentPerson.getPersonKey());
+	    			ServiceUtils.storage().updatePerson(person);
+	    			return new ResponseEntity<Long>(person.getPersonKey(), HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+	    		}
+	    	}
     	}
     	ServiceUtils.storage().insertPerson(person);
     	return new ResponseEntity<Long>(person.getPersonKey(), HttpHelper.commonHttpHeaders(), HttpStatus.OK);
@@ -169,7 +176,7 @@ public class CommonController {
     		method = RequestMethod.POST, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> vote(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long personKey, Vote vote) 
+    		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long personKey, @RequestBody Vote vote) 
     				throws NumberFormatException, Exception
     { 
     	if(vote.getGameKey() == null) throw new BadRequestException("no game provided");

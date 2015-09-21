@@ -56,7 +56,7 @@ public class DatabaseManager {
 		Connection conn = getDBConnection();
 		String currentSql = null;
         try {
-        	URL url = Resources.getResource("database/mysql/00_createCatalogItemTable.sql");
+        	URL url = Resources.getResource("database/mysql/createDatabase.sql");
     		String res = Resources.toString(url, Charsets.UTF_8);
     		String[] sqls = res.split(";");
     		
@@ -114,6 +114,7 @@ public class DatabaseManager {
 	            }
 	        }
 			
+			conn.commit();
 			return person.getPersonKey();
 		}
 	}
@@ -140,6 +141,7 @@ public class DatabaseManager {
 	            }
 	        }
 			
+			conn.commit();
 			return vote.getVoteKey();
 		}
 	}
@@ -166,6 +168,7 @@ public class DatabaseManager {
 	            }
 	        }
 			
+			conn.commit();
 			return game.getGameKey();
 		}
 	}
@@ -183,10 +186,8 @@ public class DatabaseManager {
 			ps.setLong(i++, person.getPersonKey());
 			ps.executeUpdate();
 			
+			conn.commit();
 			return person.getPersonKey();
-		} catch (Exception e)
-		{
-			throw e;
 		}
 	}
 	
@@ -203,6 +204,7 @@ public class DatabaseManager {
 			ps.setLong(i++, game.getGameKey());
 			ps.executeUpdate();
 			
+			conn.commit();
 			return game.getGameKey();
 		} catch (Exception e)
 		{
@@ -223,10 +225,8 @@ public class DatabaseManager {
 			ps.setLong(i++, vote.getVoteKey());
 			ps.executeUpdate();
 			
+			conn.commit();
 			return vote.getVoteKey();
-		} catch (Exception e)
-		{
-			throw e;
 		}
 	}
 	
@@ -266,9 +266,9 @@ public class DatabaseManager {
 		
 		updateSql.append("PersonName=?,");
 		updateSql.append("Title=?,");
-		updateSql.append("Information=?,");
+		updateSql.append("Information=?");
 		
-		whereSql.append("WHERE PersonKey=?;");
+		whereSql.append(" WHERE PersonKey=?;");
 		return updateSql.append(whereSql).toString();
 	}
 	
@@ -280,9 +280,9 @@ public class DatabaseManager {
 		
 		updateSql.append("GameName=?,");
 		updateSql.append("Location=?,");
-		updateSql.append("Rules=?,");
+		updateSql.append("Rules=?");
 		
-		whereSql.append("WHERE GameKey=?;");
+		whereSql.append(" WHERE GameKey=?;");
 		return updateSql.append(whereSql).toString();
 	}
 	
@@ -294,9 +294,9 @@ public class DatabaseManager {
 		
 		updateSql.append("PersonKey=?,");
 		updateSql.append("GameKey=?,");
-		updateSql.append("VoteNumber=?,");
+		updateSql.append("VoteNumber=?");
 		
-		whereSql.append("WHERE GameKey=?;");
+		whereSql.append(" WHERE GameKey=?;");
 		return updateSql.append(whereSql).toString();
 	}
 	
@@ -384,11 +384,12 @@ public class DatabaseManager {
 			{
 				personToReturn.setPersonKey(rs.getLong("PersonKey"));
 				personToReturn.setPersonName(rs.getString("PersonName"));
-				personToReturn.setPersonName(rs.getString("Title"));
-				personToReturn.setPersonName(rs.getString("Information"));
+				personToReturn.setTitle(rs.getString("Title"));
+				personToReturn.setInformation(rs.getString("Information"));
 			}
 			
 			List<Vote> votes = getVotesForPerson(personToReturn.getPersonKey());
+			if(votes == null) return personToReturn;
 			for(Vote vote : votes)
 			{
 				if(vote.getVoteNumber() == 3)
