@@ -458,6 +458,22 @@ public class DatabaseManager {
 				gameToReturn.setGameName(rs.getString("GameName"));
 				gameToReturn.setLocation(rs.getString("Location"));
 				gameToReturn.setRules(rs.getString("Rules"));
+				
+				String voteSql = "SELECT * FROM Vote where GameKey = ?;";
+				PreparedStatement ps2 = conn.prepareStatement(voteSql);
+				ps2.setLong(1, gameToReturn.getGameKey());
+				ResultSet rs2 = ps2.executeQuery();
+				
+				if(!rs2.isBeforeFirst()) continue;
+				
+				int total = 0;
+				
+				while(rs2.next())
+				{
+					total += rs2.getInt("VoteNumber");
+				}
+				
+				gameToReturn.setVoteTotal(total);
 			}
 			return gameToReturn;
 		}
