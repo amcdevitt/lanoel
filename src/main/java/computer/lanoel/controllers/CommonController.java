@@ -1,6 +1,9 @@
 package computer.lanoel.controllers;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -197,6 +200,15 @@ public class CommonController {
     	if(vote.getVoteNumber() < 1 || vote.getVoteNumber() > 3)
     	{
     		throw new BadRequestException("Votes must be 1, 2, or 3");
+    	}
+    	
+    	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+    	Calendar currentTime = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"));
+    	Calendar voteCutoffTime = Calendar.getInstance();
+    	voteCutoffTime.setTime(sdf.parse("2015-10-24T15:00"));
+    	if(currentTime.after(voteCutoffTime))
+    	{
+    		throw new BadRequestException("Voting ended!");
     	}
     	
     	List<Vote> votesForPerson = ServiceUtils.storage().getVotesForPerson(vote.getPersonKey());
