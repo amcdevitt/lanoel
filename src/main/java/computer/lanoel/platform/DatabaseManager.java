@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.common.base.Charsets;
@@ -16,8 +17,6 @@ import com.mysql.jdbc.Statement;
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Vote;
-import computer.lanoel.exceptions.BadRequestException;
-
 
 public class DatabaseManager {
 	
@@ -536,6 +535,38 @@ public class DatabaseManager {
 				personList.add(getPerson(rs.getLong("PersonKey")));				
 			}
 			return personList;
+		}
+	}
+	
+	public List<Game> getTopFiveGames() throws Exception
+	{
+		List<Game> gameList = getGameList();
+		
+		try(Connection conn = getDBConnection())
+		{
+			String gamesByUniquePersonVotesSql = "select GameKey, count(distinct PersonKey) as UniqueVotes "
+					+ "from Vote group by GameKey order by count(distinct PersonKey) desc;";
+			
+			PreparedStatement ps = conn.prepareStatement(gamesByUniquePersonVotesSql);
+			ResultSet rs = ps.executeQuery();
+	
+			if(!rs.isBeforeFirst()) return null;
+			
+			while(rs.next())
+			{
+				Long gameKey = rs.getLong("GameKey");
+				for(Game game : gameList)
+				{
+					if(game.getGameKey() == gameKey)
+					{
+						game.setNumUniquePersonVotes(rs.getInt("UniqueVotes"));
+					}
+				}
+			}
+			
+			Collections.sort(gameList);
+			
+			return gameList.subList(0, 5);
 		}
 	}
 }

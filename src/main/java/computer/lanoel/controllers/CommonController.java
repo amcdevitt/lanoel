@@ -233,4 +233,15 @@ public class CommonController {
     		return new ResponseEntity<String>("Vote counted", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     	}
     }
+    
+    @RequestMapping(
+    		value = "/topfivegames", 
+    		method = RequestMethod.GET, 
+    		produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Game>> getTopFiveGames(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders) throws NumberFormatException, Exception
+    { 
+    	List<Game> gameList = ServiceUtils.storage().getTopFiveGames();
+    	return new ResponseEntity<List<Game>>(gameList, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    }
 }
