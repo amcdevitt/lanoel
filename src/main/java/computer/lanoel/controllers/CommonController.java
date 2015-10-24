@@ -205,7 +205,7 @@ public class CommonController {
     	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
     	Calendar currentTime = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"));
     	Calendar voteCutoffTime = Calendar.getInstance();
-    	voteCutoffTime.setTime(sdf.parse("2015-10-24T15:00"));
+    	voteCutoffTime.setTime(sdf.parse("2015-10-24T19:00"));
     	if(currentTime.after(voteCutoffTime))
     	{
     		throw new BadRequestException("Voting ended!");
@@ -230,7 +230,7 @@ public class CommonController {
     		}
     		
     		ServiceUtils.storage().insertVote(vote);
-    		return new ResponseEntity<String>("Vote counted", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    		return new ResponseEntity<String>("Vote counted! Current Time:" + currentTime, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     	}
     }
     
