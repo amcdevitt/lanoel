@@ -8,7 +8,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -16,6 +19,8 @@ import com.mysql.jdbc.Statement;
 
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
+import computer.lanoel.contracts.Round;
+import computer.lanoel.contracts.Tournament;
 import computer.lanoel.contracts.Vote;
 
 public class DatabaseManager {
@@ -567,6 +572,265 @@ public class DatabaseManager {
 			Collections.sort(gameList);
 			
 			return gameList.subList(0, 5);
+		}
+	}
+	
+	/*********************Tournament****************************/
+	
+	public Long insertTournament(Tournament tourn) throws Exception
+	{
+		try(Connection conn = getDBConnection())
+		{
+			PreparedStatement ps = conn.prepareStatement(TournamentSql.tournamentInsertSql(), Statement.RETURN_GENERATED_KEYS);
+			
+			int i = 1;
+			ps.setString(i++, tourn.getTournamentName());
+			ps.executeUpdate();
+			
+			
+			try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+	            if (generatedKeys.next()) {
+	                tourn.setTournamentKey(generatedKeys.getLong(1));
+	            }
+	            else {
+	                throw new SQLException("Item price insert failed, no ID obtained.");
+	            }
+	        }
+			
+			conn.commit();
+			return tourn.getTournamentKey();
+		}
+	}
+	
+	public void updateTournament(Tournament tourn) throws Exception
+	{
+		try(Connection conn = getDBConnection())
+		{
+			PreparedStatement ps = conn.prepareStatement(TournamentSql.tournamentUpdateSql());
+			
+			int i = 1;
+			ps.setString(i++, tourn.getTournamentName());
+			ps.setLong(i++, tourn.getTournamentKey());
+			ps.executeUpdate();
+			
+			conn.commit();
+		}
+	}
+	
+	public Long insertRound(Long tournamentKey, Round round) throws Exception
+	{
+		if(round.getGame() == null)
+		{
+			throw new Exception("Must set a game!!!");
+		}
+		
+		try(Connection conn = getDBConnection())
+		{
+			PreparedStatement ps = conn.prepareStatement(TournamentSql.roundInsertSql(), Statement.RETURN_GENERATED_KEYS);
+			
+			int i = 1;
+			ps.setLong(i++, tournamentKey);
+			ps.setInt(i++, round.getRoundNumber());
+			ps.setLong(i++, round.getGame().getGameKey());
+			ps.executeUpdate();
+			
+			
+			try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+	            if (generatedKeys.next()) {
+	                round.setRoundKey(generatedKeys.getLong(1));
+	            }
+	            else {
+	                throw new SQLException("Item price insert failed, no ID obtained.");
+	            }
+	        }
+			
+			conn.commit();
+			return round.getRoundKey();
+		}
+	}
+	
+	public void updateRound(Long tournamentKey, Round round) throws Exception
+	{
+		try(Connection conn = getDBConnection())
+		{
+			PreparedStatement ps = conn.prepareStatement(TournamentSql.roundUpdateSql());
+			
+			int i = 1;
+			ps.setLong(i++, round.getGame().getGameKey());
+			ps.setLong(i++, tournamentKey);
+			ps.setLong(i++, round.getRoundNumber());
+			ps.executeUpdate();
+			
+			conn.commit();
+		}
+	}
+	
+	public void insertRoundStanding(Long personKey, Long roundKey, int place) throws Exception
+	{		
+		try(Connection conn = getDBConnection())
+		{
+			try
+			{
+				PreparedStatement deletePs = conn.prepareStatement("DELETE FROM RoundStanding WHERE RoundKey=? AND PersonKey=?");
+				deletePs.setLong(1, roundKey);
+				deletePs.setLong(2, personKey);
+				deletePs.execute();
+			} catch (Exception e)
+			{
+				// Do nothing!
+			}
+			
+			
+			PreparedStatement ps = conn.prepareStatement(TournamentSql.roundStandingInsertSql());
+			
+			int i = 1;
+			ps.setLong(i++, roundKey);
+			ps.setLong(i++, personKey);
+			ps.setInt(i++, place);
+			ps.executeUpdate();
+
+			conn.commit();
+		}
+	}
+	
+	public void updateRoundStanding(Long personKey, Long roundKey, int place) throws Exception
+	{
+		try(Connection conn = getDBConnection())
+		{
+			PreparedStatement ps = conn.prepareStatement(TournamentSql.roundStandingUpdateSql());
+			
+			int i = 1;
+			ps.setInt(i++, place);
+			ps.setLong(i++, roundKey);
+			ps.setLong(i++, personKey);
+			ps.executeUpdate();
+			
+			conn.commit();
+		}
+	}
+	
+	public Tournament getTournament(Long tournamentKey) throws Exception
+	{
+		try(Connection conn = getDBConnection())
+		{
+			PreparedStatement ps = conn.prepareStatement("SELECT * FROM Tournament WHERE TournamentKey = ?;");
+			
+			ps.setLong(1, tournamentKey);
+			
+			ResultSet rs = ps.executeQuery();
+			
+			if(!rs.isBeforeFirst()) return null;
+			
+			Tournament tourn = new Tournament();
+			
+			while(rs.next())
+			{
+				tourn.setTournamentName(rs.getString("TournamentName"));
+				tourn.setTournamentKey(rs.getLong("TournamentKey"));
+				tourn.setRounds(getRounds(tournamentKey));
+			}
+			
+			return tourn;
+		}
+	}
+	
+	public List<Round> getRounds(Long tournamentKey) throws Exception
+	{
+		try(Connection conn = getDBConnection())
+		{
+			PreparedStatement ps = conn.prepareStatement("SELECT * FROM Round WHERE TournamentKey = ?;");
+			
+			ps.setLong(1, tournamentKey);
+			
+			ResultSet rs = ps.executeQuery();
+			
+			if(!rs.isBeforeFirst()) return new ArrayList<Round>();
+			
+			List<Round> roundList = new ArrayList<Round>();
+			
+			while(rs.next())
+			{
+				Round currentRound = new Round();
+				Long gameKey = rs.getLong("GameKey");
+				currentRound.setRoundNumber(rs.getInt("RoundNumber"));
+				currentRound.setRoundKey(rs.getLong("RoundKey"));
+				currentRound.setGame(getGame(gameKey));
+				currentRound.setPlaces(getRoundStandings(currentRound.getRoundKey())); 
+				roundList.add(currentRound);
+			}
+			
+			return roundList;
+		}
+	}
+	
+	public Map<Integer, Person> getRoundStandings(Long roundKey) throws Exception
+	{
+		try(Connection conn = getDBConnection())
+		{
+			PreparedStatement ps = conn.prepareStatement("SELECT * FROM RoundStanding WHERE RoundKey = ?;");
+			
+			ps.setLong(1, roundKey);
+			
+			ResultSet rs = ps.executeQuery();
+			
+			if(!rs.isBeforeFirst()) return null;
+			
+			Map<Integer, Person> standingMap = new HashMap<Integer, Person>();
+			
+			while(rs.next())
+			{
+				Long personKey = rs.getLong("PersonKey");
+				Person currentPerson = getPerson(personKey);
+				int place = rs.getInt("Place");
+				standingMap.put(place, currentPerson);
+			}
+			
+			return standingMap;
+		}
+	}
+	
+	public Map<Integer, Integer> getPointValues() throws Exception
+	{
+		try(Connection conn = getDBConnection())
+		{
+			PreparedStatement ps = conn.prepareStatement("SELECT * FROM PointValues");
+			
+			ResultSet rs = ps.executeQuery();
+			
+			if(!rs.isBeforeFirst()) return null;
+			
+			Map<Integer, Integer> pointMap = new HashMap<Integer, Integer>();
+			
+			while(rs.next())
+			{
+				int place = rs.getInt("Place");
+				int pointValue = rs.getInt("PointValue");
+				
+				pointMap.put(place, pointValue);
+			}
+			
+			return pointMap;
+		}
+	}
+	
+	public void updatePointValues(Map<Integer, Integer> pointMap) throws Exception
+	{
+		try(Connection conn = getDBConnection())
+		{
+			Iterator it = pointMap.entrySet().iterator();
+			
+			while(it.hasNext())
+			{
+				PreparedStatement ps = conn.prepareStatement("UPDATE PointValues SET PointValue=? WHERE Place=?;");
+				Map.Entry<Integer, Integer> pair = (Map.Entry)it.next();
+				ps.setInt(1, pair.getValue());
+				ps.setInt(2, pair.getKey());
+				it.remove();
+				
+				ps.executeUpdate();
+				conn.commit();
+				
+			}
 		}
 	}
 }
