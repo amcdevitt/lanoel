@@ -65,9 +65,8 @@ public class Score
 			
 			while(it.hasNext())
 			{
-				Map.Entry<Integer, Person> pair = (Map.Entry)it.next();
-				Person person = pair.getValue();
-				String personName = person.getTitle() + " " + person.getPersonName();
+				Map.Entry<Integer, String> pair = (Map.Entry)it.next();
+				String personName = pair.getValue();
 				int place = pair.getKey();
 				it.remove();
 				

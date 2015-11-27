@@ -12,12 +12,12 @@ public class Round implements Comparable<Round>
 	private Long roundKey;
 	private int roundNumber;
 	@JsonUnwrapped
-	private Map<Integer, Person> places;
+	private Map<Integer, String> places;
 	private Game game;
 	
 	public Round()
 	{
-		places = new HashMap<Integer, Person>();
+		places = new HashMap<Integer, String>();
 	}
 
 	public Long getRoundKey()
@@ -30,19 +30,14 @@ public class Round implements Comparable<Round>
 		this.roundKey = roundKey;
 	}
 
-	public Map<Integer, Person> getPlaces()
+	public Map<Integer, String> getPlaces()
 	{
 		return places;
 	}
 
-	public void setPlaces(Map<Integer, Person> place)
+	public void setPlaces(Map<Integer, String> place)
 	{
 		this.places = place;
-	}
-	
-	public void setPlace(int place, Person person)
-	{
-		this.places.put(place, person);
 	}
 
 	public int getRoundNumber()

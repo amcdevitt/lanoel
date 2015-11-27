@@ -72,6 +72,7 @@ public class TournamentController {
     				throws Exception
     { 
     	Tournament tourn = ServiceUtils.storage().getTournament(tournamentKey);
+    	tourn.populateScore();
     	return new ResponseEntity<Tournament>(tourn, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     }
     

@@ -763,7 +763,7 @@ public class DatabaseManager {
 		}
 	}
 	
-	public Map<Integer, Person> getRoundStandings(Long roundKey) throws Exception
+	public Map<Integer, String> getRoundStandings(Long roundKey) throws Exception
 	{
 		try(Connection conn = getDBConnection())
 		{
@@ -773,16 +773,18 @@ public class DatabaseManager {
 			
 			ResultSet rs = ps.executeQuery();
 			
-			if(!rs.isBeforeFirst()) return null;
+			if(!rs.isBeforeFirst()) return new HashMap<Integer, String>();
 			
-			Map<Integer, Person> standingMap = new HashMap<Integer, Person>();
+			Map<Integer, String> standingMap = new HashMap<Integer, String>();
 			
 			while(rs.next())
 			{
 				Long personKey = rs.getLong("PersonKey");
 				Person currentPerson = getPerson(personKey);
+				if(currentPerson == null) continue;
 				int place = rs.getInt("Place");
-				standingMap.put(place, currentPerson);
+				String scoreName = currentPerson.getTitle() + ' ' + currentPerson.getPersonName();
+				standingMap.put(place, scoreName.trim());
 			}
 			
 			return standingMap;
