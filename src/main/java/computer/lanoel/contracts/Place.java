@@ -1,17 +1,11 @@
 package computer.lanoel.contracts;
 
-
-public class Score
+public class Place
 {
 
-	public String personName;
-	public int score;
+	public int place;
+	public String person;
 	
-	public Score()
-	{
-
-	}
-
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
@@ -20,11 +14,9 @@ public class Score
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((personName == null) ? 0 : personName.hashCode());
+		result = prime * result + place;
 		return result;
 	}
-
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
@@ -37,13 +29,11 @@ public class Score
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Score other = (Score) obj;
-		if (personName == null)
-		{
-			if (other.personName != null)
-				return false;
-		} else if (!personName.equals(other.personName))
+		Place other = (Place) obj;
+		if (place != other.place)
 			return false;
 		return true;
 	}
+	
+	
 }

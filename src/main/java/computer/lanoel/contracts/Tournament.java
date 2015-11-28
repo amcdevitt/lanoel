@@ -18,14 +18,13 @@ public class Tournament
 	private Long tournamentKey;
 	private String tournamentName;
 	private List<Round> roundList;
-	@JsonUnwrapped
-	private Map<String, Integer> scores;
+	private List<Score> scores;
 	@JsonIgnore
 	private Map<Integer, Integer> pointValues;
 	
 	public Tournament()
 	{
-		scores = new HashMap<String, Integer>();
+		scores = new ArrayList<Score>();
 		roundList = new ArrayList<Round>();
 	}
 	
@@ -75,28 +74,31 @@ public class Tournament
 		
 		for(Round round: roundList)
 		{
-			if(round.getPlaces() == null) continue;
-			Iterator it = round.getPlaces().entrySet().iterator();
+			if(round.getPlaces() == null || round.getPlaces().size() == 0) continue;
 			
-			while(it.hasNext())
+			for(Place placeObj : round.getPlaces())
 			{
-				Map.Entry<Integer, String> pair = (Map.Entry)it.next();
-				String personName = pair.getValue();
-				int place = pair.getKey();
-				//it.remove();
+				String personName = placeObj.person;
+				int place = placeObj.place;
 				
-				if(!scores.containsKey(personName))
+				Score playerScore = new Score();
+				playerScore.personName = personName;
+				playerScore.score = pointValues.get(place);
+				
+				if(scores.contains(playerScore))
 				{
-					scores.put(personName, 0);
+					Score tempScore = scores.get(scores.indexOf(playerScore));
+					tempScore.score += playerScore.score;
 				}
-				
-				int currentScore = scores.get(personName);
-				scores.put(personName, currentScore + pointValues.get(place));
+				else
+				{
+					scores.add(playerScore);
+				}
 			}
 		}
 	}
 	
-	public Map<String, Integer> getScores() throws Exception
+	public List<Score> getScores() throws Exception
 	{		
 		return scores;
 	}

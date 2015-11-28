@@ -1,6 +1,8 @@
 package computer.lanoel.contracts;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -12,12 +14,12 @@ public class Round implements Comparable<Round>
 	private Long roundKey;
 	private int roundNumber;
 	@JsonUnwrapped
-	private Map<Integer, String> places;
+	private List<Place> places;
 	private Game game;
 	
 	public Round()
 	{
-		places = new HashMap<Integer, String>();
+		places = new ArrayList<Place>();
 	}
 
 	public Long getRoundKey()
@@ -30,14 +32,14 @@ public class Round implements Comparable<Round>
 		this.roundKey = roundKey;
 	}
 
-	public Map<Integer, String> getPlaces()
+	public List<Place> getPlaces()
 	{
 		return places;
 	}
 
-	public void setPlaces(Map<Integer, String> place)
+	public void setPlaces(List<Place> places)
 	{
-		this.places = place;
+		this.places = places;
 	}
 
 	public int getRoundNumber()

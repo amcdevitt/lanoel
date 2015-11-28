@@ -19,6 +19,7 @@ import com.mysql.jdbc.Statement;
 
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
+import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Round;
 import computer.lanoel.contracts.Tournament;
 import computer.lanoel.contracts.Vote;
@@ -755,7 +756,7 @@ public class DatabaseManager {
 				currentRound.setRoundNumber(rs.getInt("RoundNumber"));
 				currentRound.setRoundKey(rs.getLong("RoundKey"));
 				currentRound.setGame(getGame(gameKey));
-				currentRound.setPlaces(getRoundStandings(currentRound.getRoundKey())); 
+				currentRound.setPlaces(getRoundStandings(currentRound.getRoundKey()));
 				roundList.add(currentRound);
 			}
 			
@@ -763,7 +764,7 @@ public class DatabaseManager {
 		}
 	}
 	
-	public Map<Integer, String> getRoundStandings(Long roundKey) throws Exception
+	public List<Place> getRoundStandings(Long roundKey) throws Exception
 	{
 		try(Connection conn = getDBConnection())
 		{
@@ -773,21 +774,26 @@ public class DatabaseManager {
 			
 			ResultSet rs = ps.executeQuery();
 			
-			if(!rs.isBeforeFirst()) return new HashMap<Integer, String>();
+			if(!rs.isBeforeFirst()) return new ArrayList<Place>();
 			
-			Map<Integer, String> standingMap = new HashMap<Integer, String>();
+			List<Place> standingList = new ArrayList<Place>();
 			
 			while(rs.next())
 			{
+				Place currentPlace = new Place();
 				Long personKey = rs.getLong("PersonKey");
 				Person currentPerson = getPerson(personKey);
 				if(currentPerson == null) continue;
 				int place = rs.getInt("Place");
 				String scoreName = currentPerson.getTitle() + ' ' + currentPerson.getPersonName();
-				standingMap.put(place, scoreName.trim());
+				
+				currentPlace.person = scoreName;
+				currentPlace.place = place;
+				
+				standingList.add(currentPlace);
 			}
 			
-			return standingMap;
+			return standingList;
 		}
 	}
 	

@@ -183,20 +183,4 @@ public class TournamentController {
     	return new ResponseEntity<String>("success", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     }
     
-    @RequestMapping(
-    		value = "/{tournamentKey}/standings",
-    		method = RequestMethod.GET, 
-    		produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> getStandings(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long tournamentKey) 
-    				throws Exception
-    {
-    	Tournament tourn = ServiceUtils.storage().getTournament(tournamentKey);
-    	Score score = new Score();
-    	score.setTournamentName(tourn.getTournamentName());
-    	score.setRounds(tourn.getRounds());
-    	score.populateScore();
-    	
-    	return new ResponseEntity<Object>(score, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
-    }
 }
