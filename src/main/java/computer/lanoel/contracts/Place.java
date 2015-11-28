@@ -1,10 +1,23 @@
 package computer.lanoel.contracts;
 
+import computer.lanoel.platform.ServiceUtils;
+
 public class Place
 {
-
-	public int place;
-	public String person;
+	private int place;
+	private String person;
+	private int pointValue;
+	
+	private void populatePointValues() throws Exception
+	{
+		try
+		{
+			pointValue = ServiceUtils.storage().getPointValues().get(place);
+		} catch (Exception e)
+		{
+			pointValue = 0;
+		}
+	}
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
@@ -34,6 +47,30 @@ public class Place
 			return false;
 		return true;
 	}
+
+	public String getPerson()
+	{
+		return person;
+	}
+
+	public void setPerson(String person)
+	{
+		this.person = person;
+	}
+
+	public int getPointValue()
+	{
+		return pointValue;
+	}
 	
+	public void setPlace(int newPlace) throws Exception
+	{
+		place = newPlace;
+		populatePointValues();
+	}
 	
+	public int getPlace()
+	{
+		return place;
+	}
 }

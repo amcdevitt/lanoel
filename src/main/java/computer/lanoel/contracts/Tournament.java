@@ -69,21 +69,19 @@ public class Tournament
 	}
 	
 	public void populateScore() throws Exception
-	{
-		populatePointValues();
-		
+	{		
 		for(Round round: roundList)
 		{
 			if(round.getPlaces() == null || round.getPlaces().size() == 0) continue;
 			
 			for(Place placeObj : round.getPlaces())
 			{
-				String personName = placeObj.person;
-				int place = placeObj.place;
+				String personName = placeObj.getPerson();
+				int place = placeObj.getPlace();
 				
 				Score playerScore = new Score();
 				playerScore.personName = personName;
-				playerScore.score = pointValues.get(place);
+				playerScore.score = placeObj.getPointValue();
 				
 				if(scores.contains(playerScore))
 				{
@@ -101,10 +99,5 @@ public class Tournament
 	public List<Score> getScores() throws Exception
 	{		
 		return scores;
-	}
-	
-	private void populatePointValues() throws Exception
-	{
-		pointValues = ServiceUtils.storage().getPointValues();
 	}
 }

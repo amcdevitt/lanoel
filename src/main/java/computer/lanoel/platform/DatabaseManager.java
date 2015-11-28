@@ -787,8 +787,8 @@ public class DatabaseManager {
 				int place = rs.getInt("Place");
 				String scoreName = currentPerson.getTitle() + ' ' + currentPerson.getPersonName();
 				
-				currentPlace.person = scoreName;
-				currentPlace.place = place;
+				currentPlace.setPerson(scoreName);
+				currentPlace.setPlace(place);
 				
 				standingList.add(currentPlace);
 			}
