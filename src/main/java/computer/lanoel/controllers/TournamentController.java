@@ -3,6 +3,8 @@ package computer.lanoel.controllers;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,14 +18,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import computer.lanoel.communication.Authorization;
+import computer.lanoel.communication.HttpHelper;
 import computer.lanoel.communication.ResponseObject;
-import computer.lanoel.contracts.Person;
+import computer.lanoel.communication.User;
+import computer.lanoel.communication.UserAccount;
 import computer.lanoel.contracts.Round;
-import computer.lanoel.contracts.Score;
 import computer.lanoel.contracts.Tournament;
 import computer.lanoel.exceptions.BadRequestException;
 import computer.lanoel.exceptions.InvalidSessionException;
-import computer.lanoel.platform.HttpHelper;
 import computer.lanoel.platform.ServiceUtils;
 
 @RestController
@@ -95,12 +98,32 @@ public class TournamentController {
     		value = "/{tournamentKey}/round",
     		method = RequestMethod.POST, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Long> createRound(
+    public ResponseEntity<Object> createRound(
     		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long tournamentKey, 
-    		@RequestBody Round round) 
+    		@RequestBody Round round, HttpServletRequest request) 
     				throws Exception
     { 
     	//TODO: Add security
+    	User user = HttpHelper.getUserFromRequest(request);
+    	UserAccount uAcct = null;
+    	try
+    	{
+	    	uAcct = Authorization.validateUser(user);
+	    	
+    	} catch (Exception e)
+    	{
+    		ResponseObject ro = new ResponseObject();
+        	ro.message = "User not logged in!";
+
+        	return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.BAD_REQUEST);
+    	}
+    	
+    	if(!Authorization.userHasAccess(user))
+		{
+    		throw new InvalidSessionException("User " + user.getUserName() + " does not have access to this api.", user.getSessionId());
+		}
+    	
+    	
     	if(round.getGame() == null)
     	{
     		throw new BadRequestException("Please provide a game");
@@ -126,19 +149,38 @@ public class TournamentController {
     		ServiceUtils.storage().insertRound(tournamentKey, round);
     	}
     	
-    	return new ResponseEntity<Long>(null, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    	return new ResponseEntity<Object>(null, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     }
     
     @RequestMapping(
     		value = "/{tournamentKey}/{roundNumber}/{personKey}/{place}",
     		method = RequestMethod.POST, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> recordResult(
+    public ResponseEntity<Object> recordResult(
     		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long tournamentKey, 
-    		@PathVariable int roundNumber, @PathVariable Long personKey, @PathVariable int place) 
+    		@PathVariable int roundNumber, @PathVariable Long personKey, @PathVariable int place, HttpServletRequest request) 
     				throws Exception
     { 
     	//TODO: Add security
+    	User user = HttpHelper.getUserFromRequest(request);
+    	UserAccount uAcct = null;
+    	try
+    	{
+	    	uAcct = Authorization.validateUser(user);
+	    	
+    	} catch (Exception e)
+    	{
+    		ResponseObject ro = new ResponseObject();
+        	ro.message = "User not logged in!";
+
+        	return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.BAD_REQUEST);
+    	}
+    	
+    	if(!Authorization.userHasAccess(user))
+		{
+    		throw new InvalidSessionException("User " + user.getUserName() + " does not have access to this api.", user.getSessionId());
+		}
+    	
     	List<Round> roundList = ServiceUtils.storage().getRounds(tournamentKey);
     	Round tempRound = new Round();
     	tempRound.setRoundNumber(roundNumber);
@@ -153,21 +195,8 @@ public class TournamentController {
     	}
     		
     	ServiceUtils.storage().insertRoundStanding(personKey, round.getRoundKey(), place);
-    	/*
-    	Map<Integer, Person> roundStandings = ServiceUtils.storage().getRoundStandings(round.getRoundKey());
-    	if(!roundStandings.containsKey(place))
-    	{
-    		
-    	}
     	
-    	if(roundStandings.get(place21312) != ServiceUtils.storage().getPerson(personKey))
-		{
-			
-		}
-    	*/
-    	
-    	
-    	return new ResponseEntity<String>("success", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    	return new ResponseEntity<Object>("success", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     }
     
     @RequestMapping(

@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import computer.lanoel.communication.HttpHelper;
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Vote;
 import computer.lanoel.exceptions.BadRequestException;
 import computer.lanoel.exceptions.InvalidSessionException;
 import computer.lanoel.platform.DatabaseManager;
-import computer.lanoel.platform.HttpHelper;
 import computer.lanoel.platform.ServiceUtils;
 
 @RestController
