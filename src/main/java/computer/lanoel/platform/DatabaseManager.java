@@ -694,20 +694,69 @@ public class DatabaseManager {
 		}
 	}
 	
-	public void updateRoundStanding(Long personKey, Long roundKey, int place) throws Exception
+	public void replaceRoundStandings(Long roundKey, List<Place> places) throws Exception
 	{
 		try(Connection conn = getDBConnection())
 		{
-			PreparedStatement ps = conn.prepareStatement(TournamentSql.roundStandingUpdateSql());
+			try
+			{
+				PreparedStatement deletePs = conn.prepareStatement("DELETE FROM RoundStanding WHERE RoundKey=?");
+				deletePs.setLong(1, roundKey);
+				deletePs.execute();
+				conn.commit();
+			} catch (Exception e)
+			{
+				// Do nothing!
+			}
 			
-			int i = 1;
-			ps.setInt(i++, place);
-			ps.setLong(i++, roundKey);
-			ps.setLong(i++, personKey);
-			ps.executeUpdate();
-			
-			conn.commit();
+			for(Place place : places)
+			{
+				PreparedStatement ps = conn.prepareStatement(TournamentSql.roundStandingInsertSql());
+				
+				int i = 1;
+				ps.setLong(i++, roundKey);
+				ps.setLong(i++, getPersonKey(place.getPerson()));
+				ps.setInt(i++, place.getPlace());
+				ps.executeUpdate();
+				conn.commit();
+			}
 		}
+	}
+	
+	public Long getPersonKey(String personName) throws Exception
+	{
+		try(Connection conn = getDBConnection())
+		{
+			PreparedStatement ps = conn.prepareStatement("SELECT PersonKey FROM Person WHERE PersonName like ?;");
+			
+			String tempName = null;
+			try
+			{
+				tempName = personName.substring(personName.lastIndexOf(' '));
+			} catch (Exception e)
+			{
+				//We might not have a space
+				tempName = personName;
+			}
+			
+			//if this didn't get set to anything, set it
+			if(tempName == null)
+			{
+				tempName = personName;
+			}
+			
+			ps.setString(1, "%" + tempName.trim());
+			ResultSet rs = ps.executeQuery();
+			
+			if(!rs.isBeforeFirst()) return null;
+			
+			while(rs.next())
+			{
+				return rs.getLong("PersonKey");
+			}
+		}
+		
+		return null;
 	}
 	
 	public Tournament getTournament(Long tournamentKey) throws Exception

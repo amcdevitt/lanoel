@@ -23,6 +23,7 @@ import computer.lanoel.communication.HttpHelper;
 import computer.lanoel.communication.ResponseObject;
 import computer.lanoel.communication.User;
 import computer.lanoel.communication.UserAccount;
+import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Round;
 import computer.lanoel.contracts.Tournament;
 import computer.lanoel.exceptions.BadRequestException;
@@ -149,7 +150,7 @@ public class TournamentController {
     		ServiceUtils.storage().insertRound(tournamentKey, round);
     	}
     	
-    	return new ResponseEntity<Object>(null, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    	return new ResponseEntity<Object>(null, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.OK);
     }
     
     @RequestMapping(
@@ -196,7 +197,54 @@ public class TournamentController {
     		
     	ServiceUtils.storage().insertRoundStanding(personKey, round.getRoundKey(), place);
     	
-    	return new ResponseEntity<Object>("success", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    	return new ResponseEntity<Object>("success", HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.OK);
+    }
+    
+    @RequestMapping(
+    		value = "/{tournamentKey}/{roundNumber}/updateScores",
+    		method = RequestMethod.POST, 
+    		produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> updateScores(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long tournamentKey, 
+    		@PathVariable int roundNumber, @RequestBody List<Place> places, HttpServletRequest request) 
+    				throws Exception
+    { 
+    	//TODO: Add security
+    	User user = HttpHelper.getUserFromRequest(request);
+    	UserAccount uAcct = null;
+    	try
+    	{
+	    	uAcct = Authorization.validateUser(user);
+	    	
+    	} catch (Exception e)
+    	{
+    		ResponseObject ro = new ResponseObject();
+        	ro.message = "User not logged in!";
+
+        	return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.BAD_REQUEST);
+    	}
+    	
+    	if(!Authorization.userHasAccess(user))
+		{
+    		throw new InvalidSessionException("User " + user.getUserName() + " does not have access to this api.", user.getSessionId());
+		}
+    	
+    	List<Round> roundList = ServiceUtils.storage().getRounds(tournamentKey);
+    	Round tempRound = new Round();
+    	tempRound.setRoundNumber(roundNumber);
+    	Round round = null;
+    	
+    	try
+    	{
+    		round = roundList.get(roundList.indexOf(tempRound));
+    	} catch (Exception e)
+    	{
+    		throw new Exception("Round " + roundNumber + " does not exist");
+    	}
+    		
+    	ServiceUtils.storage().replaceRoundStandings(round.getRoundKey(), places);
+    	
+    	return new ResponseEntity<Object>("success", HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.OK);
     }
     
     @RequestMapping(
