@@ -849,9 +849,10 @@ public class DatabaseManager {
 				Person currentPerson = getPerson(personKey);
 				if(currentPerson == null) continue;
 				int place = rs.getInt("Place");
-				String scoreName = currentPerson.getTitle() + ' ' + currentPerson.getPersonName();
+				String scoreName = (String) (currentPerson.getTitle() == null ? " " : currentPerson.getTitle());
+				scoreName += ' ' + currentPerson.getPersonName();
 				
-				currentPlace.setPerson(scoreName);
+				currentPlace.setPerson(scoreName.trim());
 				currentPlace.setPlace(place);
 				
 				standingList.add(currentPlace);
