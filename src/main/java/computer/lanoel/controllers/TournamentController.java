@@ -248,6 +248,53 @@ public class TournamentController {
     }
     
     @RequestMapping(
+    		value = "/{tournamentKey}/{roundNumber}/resetRoundScores",
+    		method = RequestMethod.POST, 
+    		produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> resetRoundScores(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long tournamentKey, 
+    		@PathVariable int roundNumber, HttpServletRequest request) 
+    				throws Exception
+    { 
+    	//TODO: Add security
+    	User user = HttpHelper.getUserFromRequest(request);
+    	UserAccount uAcct = null;
+    	try
+    	{
+	    	uAcct = Authorization.validateUser(user);
+	    	
+    	} catch (Exception e)
+    	{
+    		ResponseObject ro = new ResponseObject();
+        	ro.message = "User not logged in!";
+
+        	return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.BAD_REQUEST);
+    	}
+    	
+    	if(!Authorization.userHasAccess(user))
+		{
+    		throw new InvalidSessionException("User " + user.getUserName() + " does not have access to this api.", user.getSessionId());
+		}
+    	
+    	List<Round> roundList = ServiceUtils.storage().getRounds(tournamentKey);
+    	Round tempRound = new Round();
+    	tempRound.setRoundNumber(roundNumber);
+    	Round round = null;
+    	
+    	try
+    	{
+    		round = roundList.get(roundList.indexOf(tempRound));
+    	} catch (Exception e)
+    	{
+    		throw new Exception("Round " + roundNumber + " does not exist");
+    	}
+    		
+    	ServiceUtils.storage().resetRoundStandings(round.getRoundKey());
+    	
+    	return new ResponseEntity<Object>("success", HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.OK);
+    }
+    
+    @RequestMapping(
     		value = "/pointValues",
     		method = RequestMethod.POST, 
     		produces = MediaType.APPLICATION_JSON_VALUE)

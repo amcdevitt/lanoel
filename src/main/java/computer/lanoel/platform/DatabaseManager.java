@@ -698,16 +698,7 @@ public class DatabaseManager {
 	{
 		try(Connection conn = getDBConnection())
 		{
-			try
-			{
-				PreparedStatement deletePs = conn.prepareStatement("DELETE FROM RoundStanding WHERE RoundKey=?");
-				deletePs.setLong(1, roundKey);
-				deletePs.execute();
-				conn.commit();
-			} catch (Exception e)
-			{
-				// Do nothing!
-			}
+			resetRoundStandings(roundKey);
 			
 			for(Place place : places)
 			{
@@ -719,6 +710,30 @@ public class DatabaseManager {
 				ps.setInt(i++, place.getPlace());
 				ps.executeUpdate();
 				conn.commit();
+			}
+		}
+	}
+	
+	public void resetRoundStandings(Long roundKey) throws Exception
+	{
+		try(Connection conn = getDBConnection())
+		{
+			try
+			{
+				PreparedStatement deletePs = conn.prepareStatement("DELETE FROM RoundStanding WHERE RoundKey=?");
+				deletePs.setLong(1, roundKey);
+				deletePs.execute();
+				conn.commit();
+			} catch (Exception e)
+			{
+				// Do nothing!
+			}
+			
+			//Get all person's and put them in the round at 99th place
+			List<Person> personList = getPersonList();
+			for(Person person : personList)
+			{
+				insertRoundStanding(person.getPersonKey(), roundKey, 99);
 			}
 		}
 	}
