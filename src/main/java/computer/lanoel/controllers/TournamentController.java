@@ -242,7 +242,16 @@ public class TournamentController {
     		throw new Exception("Round " + roundNumber + " does not exist");
     	}
     		
-    	ServiceUtils.storage().replaceRoundStandings(round.getRoundKey(), places);
+    	try
+    	{
+    		ServiceUtils.storage().replaceRoundStandings(round.getRoundKey(), places);
+    	} catch (Exception e)
+    	{
+    		ResponseObject ro = new ResponseObject();
+        	ro.message = "Failed";
+        	ro.data.put(e.getMessage(), e.getStackTrace().toString());
+    		return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.BAD_REQUEST);
+    	}
     	
     	return new ResponseEntity<Object>("success", HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.OK);
     }
@@ -289,7 +298,16 @@ public class TournamentController {
     		throw new Exception("Round " + roundNumber + " does not exist");
     	}
     		
-    	ServiceUtils.storage().resetRoundStandings(round.getRoundKey());
+    	try
+    	{
+    		ServiceUtils.storage().resetRoundStandings(round.getRoundKey());
+    	} catch (Exception e)
+    	{
+    		ResponseObject ro = new ResponseObject();
+        	ro.message = "Failed";
+        	ro.data.put(e.getMessage(), e.getStackTrace().toString());
+    		return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.BAD_REQUEST);
+    	}
     	
     	return new ResponseEntity<Object>("success", HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.OK);
     }

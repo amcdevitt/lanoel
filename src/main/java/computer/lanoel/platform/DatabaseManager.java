@@ -691,6 +691,9 @@ public class DatabaseManager {
 			ps.executeUpdate();
 
 			conn.commit();
+		}catch (Exception e)
+		{
+			throw e;
 		}
 	}
 	
@@ -712,6 +715,9 @@ public class DatabaseManager {
 			}
 			
 			conn.commit();
+		}catch (Exception e)
+		{
+			throw e;
 		}
 	}
 	
@@ -736,6 +742,9 @@ public class DatabaseManager {
 			{
 				insertRoundStanding(person.getPersonKey(), roundKey, 99);
 			}
+		} catch (Exception e)
+		{
+			throw e;
 		}
 	}
 	
