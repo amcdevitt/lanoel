@@ -702,15 +702,16 @@ public class DatabaseManager {
 			
 			for(Place place : places)
 			{
-				PreparedStatement ps = conn.prepareStatement(TournamentSql.roundStandingInsertSql());
+				PreparedStatement ps = conn.prepareStatement(TournamentSql.roundStandingUpdateSql());
 				
 				int i = 1;
+				ps.setInt(i++, place.getPlace());
 				ps.setLong(i++, roundKey);
 				ps.setLong(i++, getPersonKey(place.getPerson()));
-				ps.setInt(i++, place.getPlace());
 				ps.executeUpdate();
-				conn.commit();
 			}
+			
+			conn.commit();
 		}
 	}
 	
