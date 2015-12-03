@@ -116,7 +116,7 @@ public class TournamentController {
     		ResponseObject ro = new ResponseObject();
         	ro.message = "User not logged in!";
 
-        	return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.BAD_REQUEST);
+        	return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.UNAUTHORIZED);
     	}
     	
     	if(!Authorization.userHasAccess(user))
@@ -197,7 +197,9 @@ public class TournamentController {
     		
     	ServiceUtils.storage().insertRoundStanding(personKey, round.getRoundKey(), place);
     	
-    	return new ResponseEntity<Object>("success", HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.OK);
+    	ResponseObject ro = new ResponseObject();
+    	ro.message = "success";
+    	return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.OK);
     }
     
     @RequestMapping(
@@ -221,7 +223,7 @@ public class TournamentController {
     		ResponseObject ro = new ResponseObject();
         	ro.message = "User not logged in!";
 
-        	return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.BAD_REQUEST);
+        	return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.UNAUTHORIZED);
     	}
     	
     	if(!Authorization.userHasAccess(user))
@@ -253,7 +255,9 @@ public class TournamentController {
     		return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.BAD_REQUEST);
     	}
     	
-    	return new ResponseEntity<Object>("success", HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.OK);
+    	ResponseObject ro = new ResponseObject();
+    	ro.message = "success";
+    	return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.OK);
     }
     
     @RequestMapping(
