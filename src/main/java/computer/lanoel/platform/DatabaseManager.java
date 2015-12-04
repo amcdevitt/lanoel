@@ -788,22 +788,113 @@ public class DatabaseManager {
 	{
 		try(Connection conn = getDBConnection())
 		{
-			PreparedStatement ps = conn.prepareStatement("SELECT * FROM Tournament WHERE TournamentKey = ?;");
+			PreparedStatement tournamentPs = conn.prepareStatement("SELECT * FROM Tournament WHERE TournamentKey = ?;");
+			PreparedStatement roundPs = conn.prepareStatement("SELECT * FROM Round WHERE TournamentKey = ?;");
+			PreparedStatement roundStandingPs = conn.prepareStatement("SELECT * FROM RoundStanding;");
+			PreparedStatement gamePs = conn.prepareStatement("SELECT * FROM Game;");
+			PreparedStatement personPs = conn.prepareStatement("SELECT * FROM Person;");
 			
-			ps.setLong(1, tournamentKey);
+			tournamentPs.setLong(1, tournamentKey);
+			roundPs.setLong(1, tournamentKey);
 			
-			ResultSet rs = ps.executeQuery();
+			ResultSet tournamentRs = tournamentPs.executeQuery();
+			ResultSet roundRs = roundPs.executeQuery();
+			ResultSet roundStandingRs = roundStandingPs.executeQuery();
+			ResultSet gameRs = gamePs.executeQuery();
+			ResultSet personRs = personPs.executeQuery();
 			
-			if(!rs.isBeforeFirst()) return null;
+			// Tournament
+			if(!tournamentRs.isBeforeFirst()) return null;
 			
 			Tournament tourn = new Tournament();
 			
-			while(rs.next())
+			while(tournamentRs.next())
 			{
-				tourn.setTournamentName(rs.getString("TournamentName"));
-				tourn.setTournamentKey(rs.getLong("TournamentKey"));
-				tourn.setRounds(getRounds(tournamentKey));
+				tourn.setTournamentName(tournamentRs.getString("TournamentName"));
+				tourn.setTournamentKey(tournamentRs.getLong("TournamentKey"));
+				//tourn.setRounds(getRounds(tournamentKey));
 			}
+			
+			//Person
+			if(!personRs.isBeforeFirst()) return null; //No results
+			
+			List<Person> personList = new ArrayList<Person>();
+			while(personRs.next())
+			{
+				Person personToAdd = new Person();
+				personToAdd.setPersonKey(personRs.getLong("PersonKey"));
+				personToAdd.setPersonName(personRs.getString("PersonName"));
+				personToAdd.setTitle(personRs.getString("Title"));
+				personToAdd.setInformation(personRs.getString("Information"));
+				personList.add(personToAdd);
+			}
+			
+			//Standings
+			List<Place> standingList = new ArrayList<Place>();
+			Map<Integer, Integer> pointValues = getPointValues();
+			
+			while(roundStandingRs.next())
+			{
+				Place currentPlace = new Place();
+				Long personKey = roundStandingRs.getLong("PersonKey");
+				Long roundKey = roundStandingRs.getLong("RoundKey");
+				Person tempPerson = new Person();
+				tempPerson.setPersonKey(personKey);
+				Person currentPerson = personList.get(personList.indexOf(tempPerson));
+				if(currentPerson == null) continue;
+				int place = roundStandingRs.getInt("Place");
+				String scoreName = (String) (currentPerson.getTitle() == null ? " " : currentPerson.getTitle());
+				scoreName += ' ' + currentPerson.getPersonName();
+				
+				currentPlace.setPerson(scoreName.trim());
+				currentPlace.setRoundKey(roundKey);
+				
+				currentPlace.setPlace(place, pointValues.get(place));
+				
+				standingList.add(currentPlace);
+			}
+			
+			//Games
+			if(!gameRs.isBeforeFirst()) return null;
+			
+			List<Game> gameList = new ArrayList<Game>();
+			while(gameRs.next())
+			{
+				Game game = new Game();
+				game.setGameKey(gameRs.getLong("GameKey"));
+				game.setGameName(gameRs.getString("GameName"));
+				game.setLocation(gameRs.getString("Location"));
+				game.setRules(gameRs.getString("Rules"));
+				gameList.add(game);
+			}
+			
+			//Rounds
+			List<Round> roundList = new ArrayList<Round>();
+			
+			while(roundRs.next())
+			{
+				Round currentRound = new Round();
+				Long gameKey = roundRs.getLong("GameKey");
+				currentRound.setRoundNumber(roundRs.getInt("RoundNumber"));
+				currentRound.setRoundKey(roundRs.getLong("RoundKey"));
+				Game tempGame = new Game();
+				tempGame.setGameKey(gameKey);
+				currentRound.setGame(gameList.get(gameList.indexOf(tempGame)));
+				
+				List<Place> placeList = new ArrayList<Place>();
+				for(Place place : standingList)
+				{
+					if(place.getRoundKey() == currentRound.getRoundKey())
+					{
+						placeList.add(place);
+					}
+				}
+				
+				currentRound.setPlaces(placeList);
+				roundList.add(currentRound);
+			}
+			
+			tourn.setRounds(roundList);
 			
 			return tourn;
 		}

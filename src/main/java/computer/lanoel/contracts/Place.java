@@ -1,5 +1,7 @@
 package computer.lanoel.contracts;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import computer.lanoel.platform.ServiceUtils;
 
 public class Place
@@ -7,6 +9,8 @@ public class Place
 	private int place;
 	private String person;
 	private int pointValue;
+	@JsonIgnore
+	private Long roundKey;
 	
 	private void populatePointValues() throws Exception
 	{
@@ -69,8 +73,24 @@ public class Place
 		populatePointValues();
 	}
 	
+	public void setPlace(int newPlace, int newPointValue)
+	{
+		place = newPlace;
+		pointValue = newPointValue;
+	}
+	
 	public int getPlace()
 	{
 		return place;
+	}
+
+	public Long getRoundKey()
+	{
+		return roundKey;
+	}
+
+	public void setRoundKey(Long roundKey)
+	{
+		this.roundKey = roundKey;
 	}
 }

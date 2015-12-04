@@ -231,7 +231,7 @@ public class TournamentController {
     		throw new InvalidSessionException("User " + user.getUserName() + " does not have access to this api.", user.getSessionId());
 		}
     	
-    	List<Round> roundList = ServiceUtils.storage().getRounds(tournamentKey);
+    	List<Round> roundList = ServiceUtils.storage().getTournament(tournamentKey).getRounds();
     	Round tempRound = new Round();
     	tempRound.setRoundNumber(roundNumber);
     	Round round = null;
@@ -289,7 +289,7 @@ public class TournamentController {
     		throw new InvalidSessionException("User " + user.getUserName() + " does not have access to this api.", user.getSessionId());
 		}
     	
-    	List<Round> roundList = ServiceUtils.storage().getRounds(tournamentKey);
+    	List<Round> roundList = ServiceUtils.storage().getTournament(tournamentKey).getRounds();
     	Round tempRound = new Round();
     	tempRound.setRoundNumber(roundNumber);
     	Round round = null;
