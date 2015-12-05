@@ -269,25 +269,6 @@ public class TournamentController {
     		@PathVariable int roundNumber, HttpServletRequest request) 
     				throws Exception
     { 
-    	//TODO: Add security
-    	User user = HttpHelper.getUserFromRequest(request);
-    	UserAccount uAcct = null;
-    	try
-    	{
-	    	uAcct = Authorization.validateUser(user);
-	    	
-    	} catch (Exception e)
-    	{
-    		ResponseObject ro = new ResponseObject();
-        	ro.message = "User not logged in!";
-
-        	return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.BAD_REQUEST);
-    	}
-    	
-    	if(!Authorization.userHasAccess(user))
-		{
-    		throw new InvalidSessionException("User " + user.getUserName() + " does not have access to this api.", user.getSessionId());
-		}
     	
     	List<Round> roundList = ServiceUtils.storage().getTournament(tournamentKey).getRounds();
     	Round tempRound = new Round();
@@ -310,10 +291,10 @@ public class TournamentController {
     		ResponseObject ro = new ResponseObject();
         	ro.message = "Failed";
         	ro.data.put(e.getMessage(), e.getStackTrace().toString());
-    		return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.BAD_REQUEST);
+    		return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(), HttpStatus.BAD_REQUEST);
     	}
     	
-    	return new ResponseEntity<Object>("success", HttpHelper.commonHttpHeaders(user.getSessionId()), HttpStatus.OK);
+    	return new ResponseEntity<Object>("success", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     }
     
     @RequestMapping(

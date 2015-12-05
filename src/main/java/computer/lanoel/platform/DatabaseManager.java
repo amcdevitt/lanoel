@@ -849,7 +849,17 @@ public class DatabaseManager {
 				currentPlace.setPerson(scoreName.trim());
 				currentPlace.setRoundKey(roundKey);
 				
-				currentPlace.setPlace(place, pointValues.get(place));
+				int pointValue = 0;
+				
+				try
+				{
+					pointValue = pointValues.get(place);
+				} catch (Exception e)
+				{
+					// Do nothing
+				}
+				
+				currentPlace.setPlace(place, pointValue);
 				
 				standingList.add(currentPlace);
 			}
