@@ -37,9 +37,10 @@ public class Person
 		return PersonName;
 	}
 	
-	public void setPersonName(String personName)
+	public Person setPersonName(String personName)
 	{
 		PersonName = personName;
+		return this;
 	}
 	
 	public String getTitle()
@@ -94,8 +95,8 @@ public class Person
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((PersonKey == null) ? 0 : PersonKey.hashCode());
+		result = prime * result + userName.hashCode();
+		result = prime * result + PersonName.hashCode();
 		return result;
 	}
 	/* (non-Javadoc)
@@ -111,13 +112,7 @@ public class Person
 		if (getClass() != obj.getClass())
 			return false;
 		Person other = (Person) obj;
-		if (PersonKey == null)
-		{
-			if (other.PersonKey != null)
-				return false;
-		} else if (!PersonKey.equals(other.PersonKey))
-			return false;
-		return true;
+		return this.userName == other.userName && this.PersonName == other.PersonName;
 	}
 	public String getUserName() {
 		return userName;

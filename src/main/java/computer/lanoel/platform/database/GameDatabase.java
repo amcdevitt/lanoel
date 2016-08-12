@@ -102,7 +102,7 @@ public class GameDatabase extends DatabaseManager implements IDatabase {
 		PreparedStatement ps = conn.prepareStatement(selectSql);
 		ResultSet rs = ps.executeQuery();
 
-		if(!rs.isBeforeFirst()) return null;
+		if(!rs.isBeforeFirst()) new ArrayList<Game>();
 		
 		List<Game> gameList = new ArrayList<Game>();
 		while(rs.next())

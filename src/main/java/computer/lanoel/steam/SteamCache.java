@@ -13,6 +13,7 @@ import computer.lanoel.contracts.Person;
 import computer.lanoel.platform.InitialPersonInfo;
 import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.GameDatabase;
+import computer.lanoel.platform.database.PersonDatabase;
 import computer.lanoel.steam.contracts.GameOwnership;
 import computer.lanoel.steam.contracts.PlayerSteamGame;
 import computer.lanoel.steam.contracts.PlayerSteamInformation;
@@ -39,7 +40,7 @@ public class SteamCache {
 	{
 		if(_cache == null)
 		{
-			return new SteamCache();
+			_cache = new SteamCache();
 		}
 		
 		return _cache;
@@ -55,13 +56,15 @@ public class SteamCache {
 	public void refreshFullSteamGameCache()
 	{
 		SteamFullListResponse response = SteamService.getFullGameList();
-		Set<SteamGame> gameSet = response.applist.app;
+		Set<SteamGame> gameSet = response.applist.apps.app;
 		_steamGameCache.clear();
-		_steamGameCache.putAll(gameSet.stream().collect(Collectors.toMap(SteamGame::getName, p -> p)));
+		_steamGameCache.putAll(gameSet.stream().collect(Collectors.toMap(SteamGame::getName, p -> p,(game1, game2) -> {return game1;})));
 	}
 	
-	public void refreshPlayerCache()
+	public void refreshPlayerCache() throws Exception
 	{
+		PersonDatabase db = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
+		List<Person> personsFromDb = db.getPersonList();
 		SteamPlayerSummaryResponse response = 
 				SteamService.getPlayerInformationList(
 						_personCache.stream().map(p -> p.getSteamInfo().getSteamid())
@@ -71,7 +74,7 @@ public class SteamCache {
 		{
 			for(PlayerSteamInformation info : response.response.players)
 			{
-				if(person.getSteamInfo().getSteamid() == info.getSteamid())
+				if(person.getSteamInfo().getSteamid().equals(info.getSteamid()))
 				{
 					person.setSteamInfo(info);
 					PlayerGameListResponse playerGameResponse = 
@@ -80,6 +83,15 @@ public class SteamCache {
 					break;
 				}
 			}
+			
+			Person personFromDb = personsFromDb.stream()
+					.filter(p -> p.getUserName().equals(person.getUserName())).collect(Collectors.toList()).get(0);
+			person.setGameVote1(personFromDb.getGameVote1());
+			person.setGameVote2(personFromDb.getGameVote2());
+			person.setGameVote3(personFromDb.getGameVote3());
+			person.setInformation(personFromDb.getInformation());
+			person.setPersonKey(personFromDb.getPersonKey());
+			person.setTitle(personFromDb.getTitle());
 		}
 	}
 	
@@ -106,13 +118,13 @@ public class SteamCache {
 	public GameOwnership getGameOwnership(String gameName)
 	{
 		return getGameOwnership(_lanoelGameCache.stream()
-				.filter(g -> g.getSteamGame().getName() == gameName).collect(Collectors.toList()).get(0));
+				.filter(g -> g.getSteamGame().getName().equals(gameName)).collect(Collectors.toList()).get(0));
 	}
 	
 	public GameOwnership getGameOwnership(Long gameId)
 	{
 		return getGameOwnership(_lanoelGameCache.stream()
-				.filter(g -> g.getSteamGame().getAppid() == gameId).collect(Collectors.toList()).get(0));
+				.filter(g -> g.getSteamGame().getAppid().equals(gameId)).collect(Collectors.toList()).get(0));
 	}
 	
 	public GameOwnership getGameOwnership(Game game)
@@ -125,7 +137,7 @@ public class SteamCache {
 			boolean hasGame = false;
 			for(PlayerSteamGame personGame : person.getSteamInfo().getSteamGameList())
 			{
-				if(personGame.getAppid() == game.getSteamGame().getAppid())
+				if(personGame.getAppid().equals(game.getSteamGame().getAppid()))
 				{
 					ownership.owners.add(person);
 					hasGame = true;

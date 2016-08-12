@@ -36,7 +36,10 @@ public class PreEventManager {
 	{
 		try
 		{
-			_user = LANoelAuth.loggedInUser(user.getSessionId());
+			if(user != null && user.getSessionId() != null)
+			{
+				_user = LANoelAuth.loggedInUser(user.getSessionId());
+			}
 		} catch (Exception e)
 		{
 			// Some methods do not require a logged in user
