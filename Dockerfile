@@ -4,7 +4,12 @@ MAINTAINER amcdevitt@gmail.com
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && apt-get install -y maven
-	
+
+RUN update-java-alternatives -s java-1.8.0-openjdk-amd64
+RUN java -version
+RUN which java
+RUN echo JAVA_HOME = $JAVA_HOME
+
 WORKDIR /code
 COPY . /code/
 
