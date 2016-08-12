@@ -1,5 +1,7 @@
 package computer.lanoel.contracts;
 
+import computer.lanoel.steam.contracts.PlayerSteamInformation;
+
 public class Person
 {
 	private Long PersonKey;
@@ -9,6 +11,17 @@ public class Person
 	private String GameVote1;
 	private String GameVote2;
 	private String GameVote3;
+	
+	private String userName;
+	private PlayerSteamInformation steamInfo;
+	
+	public Person(){}
+	
+	public Person(String username, PlayerSteamInformation steaminfo)
+	{
+		userName = username;
+		steamInfo = steaminfo;
+	}
 	
 	public Long getPersonKey()
 	{
@@ -105,5 +118,17 @@ public class Person
 		} else if (!PersonKey.equals(other.PersonKey))
 			return false;
 		return true;
+	}
+	public String getUserName() {
+		return userName;
+	}
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+	public PlayerSteamInformation getSteamInfo() {
+		return steamInfo;
+	}
+	public void setSteamInfo(PlayerSteamInformation steamInfo) {
+		this.steamInfo = steamInfo;
 	}
 }

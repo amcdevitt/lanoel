@@ -1,4 +1,4 @@
-package computer.lanoel.platform;
+package computer.lanoel.platform.database.sql;
 
 public class TournamentSql
 {

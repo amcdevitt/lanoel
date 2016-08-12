@@ -1,9 +1,8 @@
 package computer.lanoel.controllers;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.List;
-import java.util.TimeZone;
+import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,18 +14,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import computer.lanoel.communication.HttpHelper;
+import computer.lanoel.communication.ResponseObject;
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Vote;
 import computer.lanoel.exceptions.BadRequestException;
 import computer.lanoel.exceptions.InvalidSessionException;
-import computer.lanoel.platform.DatabaseManager;
-import computer.lanoel.platform.ServiceUtils;
+import computer.lanoel.platform.PreEventManager;
+import computer.lanoel.platform.database.DatabaseFactory;
+import computer.lanoel.platform.database.IDatabase;
 
 @RestController
 @RequestMapping("/lanoel")
@@ -40,23 +40,29 @@ public class CommonController {
 	
 	@ExceptionHandler(InvalidSessionException.class)
 	@ResponseStatus(HttpStatus.UNAUTHORIZED)
-	public ResponseEntity<String> HandleSessionError(Exception e)
+	public ResponseEntity<ResponseObject> HandleSessionError(Exception e)
 	{
-		return new ResponseEntity<String>("Not Authorized", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+		ResponseObject ro = new ResponseObject();
+		ro.message = e.getMessage();
+		return new ResponseEntity<ResponseObject>(ro, HttpHelper.commonHttpHeaders(), HttpStatus.UNAUTHORIZED);
 	}
 	
 	@ExceptionHandler(BadRequestException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ResponseEntity<String> HandleBadRequestError(Exception e)
+	public ResponseEntity<ResponseObject> HandleBadRequestError(Exception e)
 	{
-		return new ResponseEntity<String>(e.getMessage(), HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+		ResponseObject ro = new ResponseObject();
+		ro.message = e.getMessage();
+		return new ResponseEntity<ResponseObject>(ro, HttpHelper.commonHttpHeaders(), HttpStatus.BAD_REQUEST);
 	}
 	
 	@ExceptionHandler(Exception.class)
 	@ResponseStatus(HttpStatus.NOT_FOUND)
-	public ResponseEntity<String> HandleDefaultError(Exception e)
+	public ResponseEntity<ResponseObject> HandleDefaultError(Exception e)
 	{
- 		return new ResponseEntity<String>(e.getMessage(), HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+		ResponseObject ro = new ResponseObject();
+		ro.message = e.getMessage();
+ 		return new ResponseEntity<ResponseObject>(ro, HttpHelper.commonHttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 	
 	/**
@@ -69,7 +75,8 @@ public class CommonController {
     	
     	HttpStatus status = HttpStatus.OK;
     	String responseMessage = "Hello";
-    	if(!ServiceUtils.storage().storageAvailable())
+    	IDatabase db = DatabaseFactory.getInstance().getDatabase("DEFAULT");
+    	if(!db.storageAvailable())
     	{
     		status = HttpStatus.SERVICE_UNAVAILABLE;
     		responseMessage = "Unavailable";
@@ -82,11 +89,12 @@ public class CommonController {
     		value = "/gamelist", 
     		method = RequestMethod.GET, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Game>> getGameList(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders) throws NumberFormatException, Exception
+    public ResponseEntity<Set<Game>> getGameList(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders,
+    		HttpServletRequest request) throws NumberFormatException, Exception
     { 
-    	List<Game> gameList = ServiceUtils.storage().getGameList();
-    	return new ResponseEntity<List<Game>>(gameList, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<Set<Game>>(pem.getGameList(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
     
     @RequestMapping(
@@ -94,61 +102,25 @@ public class CommonController {
     		method = RequestMethod.GET, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Game> getGame(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long gameKey) 
+    		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long gameKey,
+    		HttpServletRequest request) 
     				throws NumberFormatException, Exception
-    { 
-    	Game game = ServiceUtils.storage().getGame(gameKey);
-    	return new ResponseEntity<Game>(game, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    {
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<Game>(pem.getGame(gameKey), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
     
     @RequestMapping(
     		value = "/game", 
     		method = RequestMethod.POST, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Game> manageGame(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders, @RequestBody Game game) 
+    public ResponseEntity<Set<Game>> manageGame(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders, @RequestBody Game game,
+    		HttpServletRequest request) 
     				throws NumberFormatException, Exception
     { 
-    	List<Game> currentGames = ServiceUtils.storage().getGameList();
-    	if(currentGames != null && !currentGames.isEmpty())
-    	{
-    		for(Game currentGame : currentGames)
-	    	{
-	    		if(game.getGameName().equals(currentGame.getGameName()))
-	    		{
-	    			game.setGameKey(currentGame.getGameKey());
-	    			ServiceUtils.storage().updateGame(game);
-	    			return new ResponseEntity<Game>(game, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
-	    		}
-	    	}
-    	}
-       	ServiceUtils.storage().insertGame(game);
-    	return new ResponseEntity<Game>(game, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
-    }
-    
-    @RequestMapping(
-    		value = "/person", 
-    		method = RequestMethod.POST, 
-    		produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Long> managePerson(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders, @RequestBody Person person) 
-    				throws NumberFormatException, Exception
-    { 
-    	List<Person> currentPersons = ServiceUtils.storage().getPersonList();
-    	if(currentPersons != null && !currentPersons.isEmpty())
-    	{
-	    	for(Person currentPerson : currentPersons)
-	    	{
-	    		if(person.getPersonName().equals(currentPerson.getPersonName()))
-	    		{
-	    			person.setPersonKey(currentPerson.getPersonKey());
-	    			ServiceUtils.storage().updatePerson(person);
-	    			return new ResponseEntity<Long>(person.getPersonKey(), HttpHelper.commonHttpHeaders(), HttpStatus.OK);
-	    		}
-	    	}
-    	}
-    	ServiceUtils.storage().insertPerson(person);
-    	return new ResponseEntity<Long>(person.getPersonKey(), HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<Set<Game>>(pem.manageGame(game), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
     
     @RequestMapping(
@@ -156,82 +128,41 @@ public class CommonController {
     		method = RequestMethod.GET, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Person> getPerson(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long personKey) 
+    		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long personKey,
+    		HttpServletRequest request) 
     				throws NumberFormatException, Exception
     { 
-    	Person person = ServiceUtils.storage().getPerson(personKey);
-    	return new ResponseEntity<Person>(person, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<Person>(pem.getPerson(personKey), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
     
     @RequestMapping(
     		value = "/personlist", 
     		method = RequestMethod.GET, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Person>> getPersonList(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders) throws NumberFormatException, Exception
+    public ResponseEntity<Set<Person>> getPersonList(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders,
+    		HttpServletRequest request) throws NumberFormatException, Exception
     { 
-    	List<Person> personList = ServiceUtils.storage().getPersonList();
-    	return new ResponseEntity<List<Person>>(personList, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<Set<Person>>(pem.getPersons(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
     
     @RequestMapping(
     		value = "/person/{personKey}/vote", 
     		method = RequestMethod.POST, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> vote(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long personKey, @RequestBody Vote vote) 
+    public ResponseEntity<ResponseObject> vote(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders, 
+    		@PathVariable Long personKey, @RequestBody Vote vote,
+    		HttpServletRequest request) 
     				throws NumberFormatException, Exception
     { 
-    	if(vote.getGameKey() == null) throw new BadRequestException("no game provided");
-    	if(personKey == null) throw new BadRequestException("no person provided");
-    	
-    	vote.setPersonKey(personKey);
-    	
-    	if(ServiceUtils.storage().getGame(vote.getGameKey()) == null)
-    	{
-    		throw new BadRequestException("Game does not exist");
-    	}
-    	
-    	if(ServiceUtils.storage().getPerson(vote.getPersonKey()) == null)
-    	{
-    		throw new BadRequestException("Person does not exist");
-    	}
-    	
-    	if(vote.getVoteNumber() < 1 || vote.getVoteNumber() > 3)
-    	{
-    		throw new BadRequestException("Votes must be 1, 2, or 3");
-    	}
-    	
-    	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
-    	Calendar currentTime = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"));
-    	Calendar voteCutoffTime = Calendar.getInstance();
-    	voteCutoffTime.setTime(sdf.parse("2015-10-24T19:00"));
-    	if(currentTime.after(voteCutoffTime))
-    	{
-    		throw new BadRequestException("Voting ended!");
-    	}
-    	
-    	List<Vote> votesForPerson = ServiceUtils.storage().getVotesForPerson(vote.getPersonKey());
-    	if(votesForPerson == null || votesForPerson.isEmpty())
-    	{
-    		ServiceUtils.storage().insertVote(vote);
-    		return new ResponseEntity<String>("Vote counted", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
-    	}
-    	else
-    	{
-    		for(Vote recordedVote : votesForPerson)
-    		{
-    			if(vote.getVoteNumber() == recordedVote.getVoteNumber())
-    			{
-    				vote.setVoteKey(recordedVote.getVoteKey());
-    				ServiceUtils.storage().updateVote(vote);
-    				return new ResponseEntity<String>("Vote counted", HttpHelper.commonHttpHeaders(), HttpStatus.OK);
-    			}
-    		}
-    		
-    		ServiceUtils.storage().insertVote(vote);
-    		return new ResponseEntity<String>("Vote counted! Current Time:" + currentTime, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
-    	}
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	pem.vote(vote, personKey);
+    	ResponseObject ro = new ResponseObject();
+    	ro.message = "Vote counted!";
+    	return new ResponseEntity<ResponseObject>(ro, HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
     
     @RequestMapping(
@@ -239,9 +170,10 @@ public class CommonController {
     		method = RequestMethod.GET, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Game>> getTopFiveGames(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders) throws NumberFormatException, Exception
-    { 
-    	List<Game> gameList = ServiceUtils.storage().getTopFiveGames();
-    	return new ResponseEntity<List<Game>>(gameList, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    		@RequestHeader(required = false) HttpHeaders requestHeaders,
+    		HttpServletRequest request) throws NumberFormatException, Exception
+    {
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<List<Game>>(pem.getTopFiveGames(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
 }

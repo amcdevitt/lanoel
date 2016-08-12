@@ -5,9 +5,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
-import computer.lanoel.platform.DatabaseManager;
+import computer.lanoel.platform.InitialPersonInfo;
 import computer.lanoel.platform.ServiceConstants;
-import computer.lanoel.platform.ServiceUtils;
+import computer.lanoel.platform.database.DatabaseFactory;
+import computer.lanoel.platform.database.IDatabase;
+import computer.lanoel.steam.SteamCache;
 
 @ComponentScan
 @EnableAutoConfiguration
@@ -17,10 +19,11 @@ public static void main(String[] args) {
 		
 		try
 		{
-			DatabaseManager db = new DatabaseManager(ServiceConstants.testUrl, 
-					ServiceConstants.testUsername, ServiceConstants.testPassword);
-			ServiceUtils.setStorage(db);
+			IDatabase db = DatabaseFactory.getInstance().getDatabase("DEFAULT");
 			db.UpgradeStorage();
+			InitialPersonInfo.initializePlayerDb();
+			SteamCache.instance().refresh();
+			
 		} catch (Exception ex){
 			System.out.println("Error creating Database");
 			ex.printStackTrace();

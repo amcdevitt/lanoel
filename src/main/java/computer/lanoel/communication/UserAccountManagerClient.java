@@ -15,7 +15,7 @@ public class UserAccountManagerClient
 		BaseUrl = baseUrl;
 	}
 	
-	public UserAccount getUserAccount(String sessionid)
+	public UserAccount getUserAccount(String sessionid) throws Exception
 	{
 		String url = BaseUrl + "/internal/user";
 		RestTemplate restTemplate = new RestTemplate();

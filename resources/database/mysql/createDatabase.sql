@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS Person
 PersonKey BIGINT PRIMARY KEY AUTO_INCREMENT,
 PersonName varchar(255),
 Title varchar(500),
-Information varchar(2000)
+Information varchar(2000),
+UserName varchar(200)
 );
 
 CREATE TABLE IF NOT EXISTS Game

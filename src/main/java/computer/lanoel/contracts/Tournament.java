@@ -1,16 +1,10 @@
 package computer.lanoel.contracts;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
-
-import computer.lanoel.platform.ServiceUtils;
 
 public class Tournament
 {
@@ -77,7 +71,6 @@ public class Tournament
 			for(Place placeObj : round.getPlaces())
 			{
 				String personName = placeObj.getPerson();
-				int place = placeObj.getPlace();
 				
 				Score playerScore = new Score();
 				playerScore.personName = personName;

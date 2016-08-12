@@ -7,11 +7,7 @@ public final class ServiceConstants {
 		return "LANOEL!!!!!!!!!!!!!!";
 	}
 	
-	public static final String database = "/lanoel";
+	public static final String accountServiceBaseUrl = "https://accounts.omegasixcloud.net/";
 	
-	public static final String testUrl = "jdbc:mysql://lanoeldb.cfhq1zl3zt2o.us-east-1.rds.amazonaws.com:3306" + database;
-	public static final String testUsername = "amcdevitt";
-	public static final String testPassword = "Benjamin1109";
-	
-	public static final String accountServiceBaseUrl = "http://users.omegasixcloud.net/";
+	public static final String steamAPIkey = "9A42F07D3DA22AA10B81E1B00E93C20A";
 }

@@ -2,7 +2,8 @@ package computer.lanoel.contracts;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import computer.lanoel.platform.ServiceUtils;
+import computer.lanoel.platform.database.DatabaseFactory;
+import computer.lanoel.platform.database.TournamentDatabase;
 
 public class Place
 {
@@ -16,7 +17,8 @@ public class Place
 	{
 		try
 		{
-			pointValue = ServiceUtils.storage().getPointValues().get(place);
+			TournamentDatabase db = (TournamentDatabase)DatabaseFactory.getInstance().getDatabase("VOTE");
+			pointValue = db.getPointValues().get(place);
 		} catch (Exception e)
 		{
 			pointValue = 0;

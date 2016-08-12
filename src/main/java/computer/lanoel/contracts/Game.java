@@ -1,5 +1,7 @@
 package computer.lanoel.contracts;
 
+import computer.lanoel.steam.contracts.SteamGame;
+
 public class Game implements Comparable<Game>
 {
 	private Long GameKey;
@@ -8,6 +10,9 @@ public class Game implements Comparable<Game>
 	private String Rules;
 	private int VoteTotal;
 	private int uniquePersonVotes;
+
+	private SteamGame steamGame;
+	private String steamInfo;
 	
 	public Long getGameKey()
 	{
@@ -94,16 +99,29 @@ public class Game implements Comparable<Game>
 		return voteComparison;
 	}
 
+	public SteamGame getSteamGame() {
+		return steamGame;
+	}
+
+	public void setSteamGame(SteamGame steamInfo) {
+		this.steamGame = steamInfo;
+	}
+
+	public String getSteamInfo() {
+		return steamInfo;
+	}
+
+	public void setSteamInfo(String steamInfo) {
+		this.steamInfo = steamInfo;
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
 	public int hashCode()
 	{
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((GameKey == null) ? 0 : GameKey.hashCode());
-		return result;
+		return 31 + ((GameKey == null) ? 0 : GameKey.hashCode());
 	}
 
 	/* (non-Javadoc)
@@ -127,5 +145,4 @@ public class Game implements Comparable<Game>
 			return false;
 		return true;
 	}
-
 }

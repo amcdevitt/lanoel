@@ -15,23 +15,23 @@ public class HttpHelper {
 	
 	public static HttpHeaders commonHttpHeaders(String sessionId)
 	{
-		String updatedSession = SessionCache.getInstance().getCurrentSession(sessionId);
 		HttpHeaders headers = commonHttpHeaders();
-		if(updatedSession != null)
+		if(sessionId != null)
 		{
-			headers.add("sessionid", updatedSession);
+			headers.add(SESSION_HEADER, sessionId);
 		}
 		return headers;
 	}
 	
+	public static String getSessionIdFromHeaders(HttpHeaders requestHeaders)
+	{
+		return requestHeaders.getFirst(SESSION_HEADER);
+	}
+	
 	public static User getUserFromRequest(HttpServletRequest request)
 	{
-		String ipAddr = request.getRemoteAddr();
-		String sessionId = request.getHeader(SESSION_HEADER);
-		
-		//Put the session in the cache
-		SessionCache.getInstance().putNewSession(sessionId, sessionId);
-		
-		return new User(ipAddr, sessionId);		
+		User user = new User();
+		user.setSessionId(request.getHeader(SESSION_HEADER));
+		return user;
 	}
 }
