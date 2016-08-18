@@ -10,6 +10,8 @@ import org.springframework.web.client.RestTemplate;
 import computer.lanoel.platform.ServiceConstants;
 import computer.lanoel.steam.models.PlayerGameListResponse;
 import computer.lanoel.steam.models.SteamFullListResponse;
+import computer.lanoel.steam.models.SteamGameInformationResponse;
+import computer.lanoel.steam.models.SteamGameInformationResponseHeader;
 import computer.lanoel.steam.models.SteamPlayerSummaryResponse;
 
 public class SteamService {
@@ -52,9 +54,11 @@ public class SteamService {
 		return makeRequest(PlayerGameListResponse.class, url, HttpMethod.GET);
 	}
 	
-	public static String getFullGameInformation(Long appId)
+	public static SteamGameInformationResponse getFullGameInformation(Long appId)
 	{
 		String url = fullGameInformationUrl + "?appids=" + appId;
-		return makeRequest(String.class, url, HttpMethod.GET);
+		SteamGameInformationResponseHeader header = 
+				makeRequest(SteamGameInformationResponseHeader.class, url, HttpMethod.GET);
+		return header.response;
 	}
 }

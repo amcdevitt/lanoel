@@ -104,7 +104,7 @@ public class SteamCache {
 			game.setSteamGame(_steamGameCache.get(game.getGameName()));
 			if(game.getSteamGame() == null) continue;
 			
-			game.setSteamInfo(SteamService.getFullGameInformation(game.getSteamGame().getAppid()));
+			game.setSteamInfo(SteamService.getFullGameInformation(game.getSteamGame().getAppid()).data);
 		}
 		_lanoelGameCache.clear();
 		_lanoelGameCache.addAll(gameList);

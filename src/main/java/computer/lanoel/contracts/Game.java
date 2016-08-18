@@ -1,6 +1,7 @@
 package computer.lanoel.contracts;
 
 import computer.lanoel.steam.contracts.SteamGame;
+import computer.lanoel.steam.contracts.SteamGameInformation;
 
 public class Game implements Comparable<Game>
 {
@@ -12,7 +13,7 @@ public class Game implements Comparable<Game>
 	private int uniquePersonVotes;
 
 	private SteamGame steamGame;
-	private String steamInfo;
+	private SteamGameInformation steamInfo;
 	
 	public Long getGameKey()
 	{
@@ -107,11 +108,11 @@ public class Game implements Comparable<Game>
 		this.steamGame = steamInfo;
 	}
 
-	public String getSteamInfo() {
+	public SteamGameInformation getSteamInfo() {
 		return steamInfo;
 	}
 
-	public void setSteamInfo(String steamInfo) {
+	public void setSteamInfo(SteamGameInformation steamInfo) {
 		this.steamInfo = steamInfo;
 	}
 
