@@ -24,6 +24,7 @@ import computer.lanoel.platform.database.GameDatabase;
 import computer.lanoel.platform.database.PersonDatabase;
 import computer.lanoel.platform.database.VoteDatabase;
 import computer.lanoel.steam.SteamCache;
+import computer.lanoel.steam.contracts.GameOwnership;
 
 public class PreEventManager {
 
@@ -156,9 +157,26 @@ public class PreEventManager {
 		return SteamCache.instance().getPersonList();
 	}
 	
+	public Person getAccount() throws Exception
+	{
+		if(_user == null)
+		{
+			throw new InvalidSessionException("User not logged in!", _user.getUser().getSessionId());
+		}
+		
+		String userName = _user.getUserName();
+		return SteamCache.instance().getPersonList()
+				.stream().filter(p -> p.getUserName() == userName).collect(Collectors.toList()).get(0);
+	}
+	
 	public List<Game> getTopFiveGames() throws Exception
 	{
 		GameDatabase db = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
     	return db.getTopFiveGames();
+	}
+	
+	public GameOwnership getGameOwnership(Long gameName)
+	{
+		return SteamCache.instance().getGameOwnership(gameName);
 	}
 }

@@ -121,10 +121,10 @@ public class SteamCache {
 				.filter(g -> g.getSteamGame().getName().equals(gameName)).collect(Collectors.toList()).get(0));
 	}
 	
-	public GameOwnership getGameOwnership(Long gameId)
+	public GameOwnership getGameOwnership(Long gameKey)
 	{
 		return getGameOwnership(_lanoelGameCache.stream()
-				.filter(g -> g.getSteamGame().getAppid().equals(gameId)).collect(Collectors.toList()).get(0));
+				.filter(g -> g.getGameKey().equals(gameKey)).collect(Collectors.toList()).get(0));
 	}
 	
 	public GameOwnership getGameOwnership(Game game)

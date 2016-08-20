@@ -27,6 +27,7 @@ import computer.lanoel.exceptions.InvalidSessionException;
 import computer.lanoel.platform.PreEventManager;
 import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.IDatabase;
+import computer.lanoel.steam.contracts.GameOwnership;
 
 @RestController
 @RequestMapping("/lanoel")
@@ -175,5 +176,29 @@ public class CommonController {
     {
     	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
     	return new ResponseEntity<List<Game>>(pem.getTopFiveGames(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
+    }
+    
+    @RequestMapping(
+    		value = "/game/{gameKey}/ownership", 
+    		method = RequestMethod.GET, 
+    		produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<GameOwnership> getGameOwnership(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders,
+    		HttpServletRequest request, @PathVariable Long gameKey) throws NumberFormatException, Exception
+    {
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<GameOwnership>(pem.getGameOwnership(gameKey), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
+    }
+    
+    @RequestMapping(
+    		value = "/account", 
+    		method = RequestMethod.GET, 
+    		produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Person> getAccount(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders,
+    		HttpServletRequest request) throws NumberFormatException, Exception
+    { 
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<Person>(pem.getAccount(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
 }
