@@ -134,6 +134,20 @@ public class PreEventManager {
 	public Set<Game> manageGame(Game game) throws Exception
 	{
 		GameDatabase db = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
+		
+		String regex = "[\\p{P}\\p{S}]";
+		
+		Set<String> filteredGameNames = SteamCache.instance().getGames().stream()
+				.map(g -> g.getGameName().toLowerCase().replaceAll(regex, "").replaceAll(" ", "")).collect(Collectors.toSet());
+		
+		String filteredGameName = game.getGameName().toLowerCase().replaceAll(regex, "").replaceAll(" ", "");
+		if(filteredGameNames.contains(filteredGameName))
+		{
+			Game cachedGame = SteamCache.instance().getGames().stream()
+			.filter(g -> g.getGameName().toLowerCase().replaceAll(regex, "").replaceAll(" ", "").equals(filteredGameName))
+			.collect(Collectors.toList()).get(0);
+			game.setGameKey(cachedGame.getGameKey());
+		}
     	
     	if(game.getGameKey() == null)
     	{
