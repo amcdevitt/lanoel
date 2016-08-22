@@ -25,6 +25,7 @@ import computer.lanoel.platform.database.PersonDatabase;
 import computer.lanoel.platform.database.VoteDatabase;
 import computer.lanoel.steam.SteamCache;
 import computer.lanoel.steam.contracts.GameOwnership;
+import computer.lanoel.steam.contracts.SteamGame;
 
 public class PreEventManager {
 
@@ -192,5 +193,10 @@ public class PreEventManager {
 	public GameOwnership getGameOwnership(Long gameName)
 	{
 		return SteamCache.instance().getGameOwnership(gameName);
+	}
+	
+	public Set<SteamGame> getFullSteamGameList()
+	{
+		return SteamCache.instance().getFullSteamGameList();
 	}
 }

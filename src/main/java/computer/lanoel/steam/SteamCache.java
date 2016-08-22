@@ -28,12 +28,14 @@ public class SteamCache {
 	private Set<Person> _personCache;
 	private Set<Game> _lanoelGameCache;
 	private Map<String, SteamGame> _steamGameCache;
+	private Set<SteamGame> _fullSteamGameSet;
 	
 	private SteamCache()
 	{
 		_personCache = InitialPersonInfo.personSet();
 		_lanoelGameCache = new HashSet<Game>();
 		_steamGameCache = new HashMap<String, SteamGame>();
+		_fullSteamGameSet = new HashSet<SteamGame>();
 	}
 	
 	public static SteamCache instance()
@@ -56,9 +58,9 @@ public class SteamCache {
 	public void refreshFullSteamGameCache()
 	{
 		SteamFullListResponse response = SteamService.getFullGameList();
-		Set<SteamGame> gameSet = response.applist.apps.app;
+		_fullSteamGameSet = response.applist.apps.app;
 		_steamGameCache.clear();
-		_steamGameCache.putAll(gameSet.stream().collect(Collectors.toMap(SteamGame::getName, p -> p,(game1, game2) -> {return game1;})));
+		_steamGameCache.putAll(_fullSteamGameSet.stream().collect(Collectors.toMap(SteamGame::getName, p -> p,(game1, game2) -> {return game1;})));
 	}
 	
 	public void refreshPlayerCache() throws Exception
@@ -162,5 +164,10 @@ public class SteamCache {
 	public Set<Person> getPersonList()
 	{
 		return _personCache;
+	}
+	
+	public Set<SteamGame> getFullSteamGameList()
+	{
+		return _fullSteamGameSet;
 	}
 }

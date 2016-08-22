@@ -28,6 +28,7 @@ import computer.lanoel.platform.PreEventManager;
 import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.IDatabase;
 import computer.lanoel.steam.contracts.GameOwnership;
+import computer.lanoel.steam.contracts.SteamGame;
 
 @RestController
 @RequestMapping("/lanoel")
@@ -200,5 +201,17 @@ public class CommonController {
     { 
     	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
     	return new ResponseEntity<Person>(pem.getAccount(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
+    }
+    
+    @RequestMapping(
+    		value = "/steamgames", 
+    		method = RequestMethod.GET, 
+    		produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Set<SteamGame>> getAllSteamGames(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders,
+    		HttpServletRequest request) throws NumberFormatException, Exception
+    { 
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<Set<SteamGame>>(pem.getFullSteamGameList(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
 }
