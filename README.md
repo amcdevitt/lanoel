@@ -1,3 +1,2 @@
-# accountservice
-User Account Service
-This is the user account service
+# LANoel Service
+This is the LANoel service
