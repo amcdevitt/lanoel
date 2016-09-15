@@ -68,6 +68,7 @@ public class SteamCache {
 	
 	public void refreshPlayerCache() throws Exception
 	{
+		_personCache = InitialPersonInfo.personSet();
 		PersonDatabase db = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
 		List<Person> personsFromDb = db.getPersonList();
 		SteamPlayerSummaryResponse response = 
@@ -76,7 +77,6 @@ public class SteamCache {
 						.collect(Collectors.toList()));
 		
 		VoteDatabase voteDb = (VoteDatabase)DatabaseFactory.getInstance().getDatabase("VOTE");
-		GameDatabase gameDb = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
 		
 		for(Person person : _personCache)
 		{
