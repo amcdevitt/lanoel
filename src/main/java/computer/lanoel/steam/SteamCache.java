@@ -4,16 +4,19 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import computer.lanoel.communication.UserAccount;
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
+import computer.lanoel.contracts.Vote;
 import computer.lanoel.platform.InitialPersonInfo;
 import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.GameDatabase;
 import computer.lanoel.platform.database.PersonDatabase;
+import computer.lanoel.platform.database.VoteDatabase;
 import computer.lanoel.steam.contracts.GameOwnership;
 import computer.lanoel.steam.contracts.PlayerSteamGame;
 import computer.lanoel.steam.contracts.PlayerSteamInformation;
@@ -72,6 +75,9 @@ public class SteamCache {
 						_personCache.stream().map(p -> p.getSteamInfo().getSteamid())
 						.collect(Collectors.toList()));
 		
+		VoteDatabase voteDb = (VoteDatabase)DatabaseFactory.getInstance().getDatabase("VOTE");
+		GameDatabase gameDb = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
+		
 		for(Person person : _personCache)
 		{
 			for(PlayerSteamInformation info : response.response.players)
@@ -88,9 +94,24 @@ public class SteamCache {
 			
 			Person personFromDb = personsFromDb.stream()
 					.filter(p -> p.getUserName().equals(person.getUserName())).collect(Collectors.toList()).get(0);
-			person.setGameVote1(personFromDb.getGameVote1());
-			person.setGameVote2(personFromDb.getGameVote2());
-			person.setGameVote3(personFromDb.getGameVote3());
+			
+			List<Vote> votesForPerson = voteDb.getVotesForPerson(personFromDb.getPersonKey());
+			Optional<Vote> vote1 = votesForPerson.stream().filter(v -> v.getVoteNumber() == 3).findFirst();
+			Optional<Vote> vote2 = votesForPerson.stream().filter(v -> v.getVoteNumber() == 2).findFirst();
+			Optional<Vote> vote3 = votesForPerson.stream().filter(v -> v.getVoteNumber() == 1).findFirst();
+			
+			vote1.ifPresent(v -> person.setGameVote1(_lanoelGameCache.stream()
+					.filter(g -> g.getGameKey() == vote1.get()
+					.getGameKey()).findFirst().get().getGameName()));
+			
+			vote2.ifPresent(v -> person.setGameVote2(_lanoelGameCache.stream()
+					.filter(g -> g.getGameKey() == vote2.get()
+					.getGameKey()).findFirst().get().getGameName()));
+			
+			vote3.ifPresent(v -> person.setGameVote3(_lanoelGameCache.stream()
+					.filter(g -> g.getGameKey() == vote3.get()
+					.getGameKey()).findFirst().get().getGameName()));
+			
 			person.setInformation(personFromDb.getInformation());
 			person.setPersonKey(personFromDb.getPersonKey());
 			person.setTitle(personFromDb.getTitle());

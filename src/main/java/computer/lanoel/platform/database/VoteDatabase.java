@@ -58,16 +58,17 @@ public class VoteDatabase extends DatabaseManager implements IDatabase {
 	
 	public List<Vote> getVotesForPerson(Long personKey) throws Exception
 	{
-		if(personKey == null) return null;
+		List<Vote> voteListToReturn = new ArrayList<Vote>();
+		
+		if(personKey == null) return voteListToReturn;
 		
 		String selectSql = "SELECT * FROM Vote WHERE PersonKey = ?;";
 		PreparedStatement ps = conn.prepareStatement(selectSql);
 		ps.setLong(1, personKey);
 		ResultSet rs = ps.executeQuery();
 
-		if(!rs.isBeforeFirst()) return null;
+		if(!rs.isBeforeFirst()) return voteListToReturn;
 		
-		List<Vote> voteListToReturn = new ArrayList<Vote>();
 		while(rs.next())
 		{
 			Vote vote = new Vote();
