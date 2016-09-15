@@ -119,7 +119,7 @@ public class PreEventManager {
     		
     		voteDb.insertVote(vote);
     	}
-    	SteamCache.instance().refreshPlayerCache();
+    	SteamCache.instance().refresh();
 	}
 	
 	public Set<Game> getGameList()
@@ -158,7 +158,7 @@ public class PreEventManager {
     	{
     		db.updateGame(game);
     	}
-    	SteamCache.instance().refreshLanoelGameCache();
+    	SteamCache.instance().refresh();
     	return SteamCache.instance().getGames();
 	}
 	

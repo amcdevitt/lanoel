@@ -53,7 +53,6 @@ public class SteamCache {
 	
 	public void refresh() throws Exception
 	{
-		refreshFullSteamGameCache();
 		refreshLanoelGameCache();
 		refreshPlayerCache();
 	}
@@ -68,6 +67,7 @@ public class SteamCache {
 	
 	public void refreshPlayerCache() throws Exception
 	{
+		_personCache.clear();
 		_personCache = InitialPersonInfo.personSet();
 		PersonDatabase db = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
 		List<Person> personsFromDb = db.getPersonList();

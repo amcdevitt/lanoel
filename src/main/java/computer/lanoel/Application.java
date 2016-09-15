@@ -22,6 +22,7 @@ public static void main(String[] args) {
 			IDatabase db = DatabaseFactory.getInstance().getDatabase("DEFAULT");
 			db.UpgradeStorage();
 			InitialPersonInfo.initializePlayerDb();
+			SteamCache.instance().refreshFullSteamGameCache();
 			SteamCache.instance().refresh();
 			
 		} catch (Exception ex){
