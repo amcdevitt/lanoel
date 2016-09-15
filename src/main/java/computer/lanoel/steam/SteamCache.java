@@ -96,9 +96,9 @@ public class SteamCache {
 					.filter(p -> p.getUserName().equals(person.getUserName())).collect(Collectors.toList()).get(0);
 			
 			List<Vote> votesForPerson = voteDb.getVotesForPerson(personFromDb.getPersonKey());
-			Optional<Vote> vote1 = votesForPerson.stream().filter(v -> v.getVoteNumber() == 3).findFirst();
+			Optional<Vote> vote1 = votesForPerson.stream().filter(v -> v.getVoteNumber() == 1).findFirst();
 			Optional<Vote> vote2 = votesForPerson.stream().filter(v -> v.getVoteNumber() == 2).findFirst();
-			Optional<Vote> vote3 = votesForPerson.stream().filter(v -> v.getVoteNumber() == 1).findFirst();
+			Optional<Vote> vote3 = votesForPerson.stream().filter(v -> v.getVoteNumber() == 3).findFirst();
 			
 			vote1.ifPresent(v -> person.setGameVote1(_lanoelGameCache.stream()
 					.filter(g -> g.getGameKey() == vote1.get()
