@@ -119,6 +119,7 @@ public class PreEventManager {
     		
     		voteDb.insertVote(vote);
     	}
+    	SteamCache.instance().refreshPlayerCache();
 	}
 	
 	public Set<Game> getGameList()
