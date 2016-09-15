@@ -27,6 +27,7 @@ import computer.lanoel.exceptions.InvalidSessionException;
 import computer.lanoel.platform.PreEventManager;
 import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.IDatabase;
+import computer.lanoel.steam.SteamCache;
 import computer.lanoel.steam.contracts.GameOwnership;
 import computer.lanoel.steam.contracts.SteamGame;
 
@@ -122,7 +123,9 @@ public class CommonController {
     				throws NumberFormatException, Exception
     { 
     	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
-    	return new ResponseEntity<Set<Game>>(pem.manageGame(game), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
+    	Set<Game> gameSet = pem.manageGame(game);
+    	SteamCache.instance().refresh();
+    	return new ResponseEntity<Set<Game>>(gameSet, HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
     
     @RequestMapping(
@@ -162,6 +165,7 @@ public class CommonController {
     { 
     	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
     	pem.vote(vote, personKey);
+    	SteamCache.instance().refresh();
     	ResponseObject ro = new ResponseObject();
     	ro.message = "Vote counted!";
     	return new ResponseEntity<ResponseObject>(ro, HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
