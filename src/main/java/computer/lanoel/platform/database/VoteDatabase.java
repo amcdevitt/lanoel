@@ -5,7 +5,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 import com.mysql.jdbc.Statement;
 
 import computer.lanoel.contracts.Vote;
@@ -101,5 +104,29 @@ public class VoteDatabase extends DatabaseManager implements IDatabase {
 			voteToReturn.setVoteKey(rs.getLong("VoteKey"));
 		}
 		return voteToReturn;
+	}
+	
+	public Set<Vote> getVotes() throws Exception
+	{
+		Set<Vote> votes = new HashSet<Vote>();
+		
+		String voteSelectSql = "SELECT * FROM Vote";
+		PreparedStatement ps = conn.prepareStatement(voteSelectSql);
+		
+		ResultSet rs = ps.executeQuery();
+		
+		if(!rs.isBeforeFirst()) return votes;
+		
+		while(rs.next())
+		{
+			Vote vote = new Vote();
+			vote.setPersonKey(rs.getLong("PersonKey"));
+			vote.setGameKey(rs.getLong("GameKey"));
+			vote.setVoteNumber(rs.getInt("VoteNumber"));
+			vote.setVoteKey(rs.getLong("VoteKey"));
+			votes.add(vote);
+		}
+		
+		return votes;
 	}
 }

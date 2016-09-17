@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import computer.lanoel.communication.UserAccount;
 import computer.lanoel.contracts.Game;
@@ -32,6 +33,7 @@ public class SteamCache {
 	private Set<Game> _lanoelGameCache;
 	private Map<String, SteamGame> _steamGameCache;
 	private Set<SteamGame> _fullSteamGameSet;
+	private Set<Vote> _votesCache;
 	
 	private SteamCache()
 	{
@@ -39,6 +41,7 @@ public class SteamCache {
 		_lanoelGameCache = new HashSet<Game>();
 		_steamGameCache = new HashMap<String, SteamGame>();
 		_fullSteamGameSet = new HashSet<SteamGame>();
+		_votesCache = new HashSet<Vote>();
 	}
 	
 	public static SteamCache instance()
@@ -55,6 +58,47 @@ public class SteamCache {
 	{
 		refreshLanoelGameCache();
 		refreshPlayerCache();
+	}
+	
+	public void refreshVotesCache() throws Exception
+	{
+		VoteDatabase voteDb = (VoteDatabase)DatabaseFactory.getInstance().getDatabase("VOTE");
+		_votesCache = voteDb.getVotes();
+		populateVotes(_votesCache);
+	}
+	
+	public void populateVotes(Set<Vote> votes)
+	{
+		for(Person person : _personCache)
+		{
+			Optional<Vote> vote1 = votes.stream()
+					.filter(v -> v.getPersonKey() == person.getPersonKey())
+					.filter(v -> v.getVoteNumber() == 1).findFirst();
+			Optional<Vote> vote2 = votes.stream()
+					.filter(v -> v.getPersonKey() == person.getPersonKey())
+					.filter(v -> v.getVoteNumber() == 2).findFirst();
+			Optional<Vote> vote3 = votes.stream()
+					.filter(v -> v.getPersonKey() == person.getPersonKey())
+					.filter(v -> v.getVoteNumber() == 3).findFirst();
+			
+			vote1.ifPresent(v -> person.setGameVote1(_lanoelGameCache.stream()
+					.filter(g -> g.getGameKey() == vote1.get()
+					.getGameKey()).findFirst().get().getGameName()));
+			
+			vote2.ifPresent(v -> person.setGameVote2(_lanoelGameCache.stream()
+					.filter(g -> g.getGameKey() == vote2.get()
+					.getGameKey()).findFirst().get().getGameName()));
+			
+			vote3.ifPresent(v -> person.setGameVote3(_lanoelGameCache.stream()
+					.filter(g -> g.getGameKey() == vote3.get()
+					.getGameKey()).findFirst().get().getGameName()));
+		}
+		
+		for(Game game : _lanoelGameCache)
+		{
+			Stream<Vote> votesForGame = votes.stream().filter(v -> v.getGameKey() == game.getGameKey());
+			votesForGame.forEach(v -> game.setVoteTotal(game.getVoteTotal() + v.getVoteNumber()));
+		}
 	}
 	
 	public void refreshFullSteamGameCache()
@@ -76,8 +120,6 @@ public class SteamCache {
 						_personCache.stream().map(p -> p.getSteamInfo().getSteamid())
 						.collect(Collectors.toList()));
 		
-		VoteDatabase voteDb = (VoteDatabase)DatabaseFactory.getInstance().getDatabase("VOTE");
-		
 		for(Person person : _personCache)
 		{
 			for(PlayerSteamInformation info : response.response.players)
@@ -95,22 +137,7 @@ public class SteamCache {
 			Person personFromDb = personsFromDb.stream()
 					.filter(p -> p.getUserName().equals(person.getUserName())).collect(Collectors.toList()).get(0);
 			
-			List<Vote> votesForPerson = voteDb.getVotesForPerson(personFromDb.getPersonKey());
-			Optional<Vote> vote1 = votesForPerson.stream().filter(v -> v.getVoteNumber() == 1).findFirst();
-			Optional<Vote> vote2 = votesForPerson.stream().filter(v -> v.getVoteNumber() == 2).findFirst();
-			Optional<Vote> vote3 = votesForPerson.stream().filter(v -> v.getVoteNumber() == 3).findFirst();
-			
-			vote1.ifPresent(v -> person.setGameVote1(_lanoelGameCache.stream()
-					.filter(g -> g.getGameKey() == vote1.get()
-					.getGameKey()).findFirst().get().getGameName()));
-			
-			vote2.ifPresent(v -> person.setGameVote2(_lanoelGameCache.stream()
-					.filter(g -> g.getGameKey() == vote2.get()
-					.getGameKey()).findFirst().get().getGameName()));
-			
-			vote3.ifPresent(v -> person.setGameVote3(_lanoelGameCache.stream()
-					.filter(g -> g.getGameKey() == vote3.get()
-					.getGameKey()).findFirst().get().getGameName()));
+			refreshVotesCache();
 			
 			person.setInformation(personFromDb.getInformation());
 			person.setPersonKey(personFromDb.getPersonKey());
@@ -129,6 +156,8 @@ public class SteamCache {
 			
 			game.setSteamInfo(SteamService.getFullGameInformation(game.getSteamGame().getAppid()).data);
 		}
+		
+		refreshVotesCache();
 		_lanoelGameCache.clear();
 		_lanoelGameCache.addAll(gameList);
 	}

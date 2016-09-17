@@ -165,7 +165,7 @@ public class CommonController {
     { 
     	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
     	pem.vote(vote, personKey);
-    	SteamCache.instance().refresh();
+    	SteamCache.instance().refreshVotesCache();
     	ResponseObject ro = new ResponseObject();
     	ro.message = "Vote counted!";
     	return new ResponseEntity<ResponseObject>(ro, HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
