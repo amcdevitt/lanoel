@@ -96,6 +96,7 @@ public class SteamCache {
 		
 		for(Game game : _lanoelGameCache)
 		{
+			game.setVoteTotal(0);
 			Stream<Vote> votesForGame = votes.stream().filter(v -> v.getGameKey() == game.getGameKey());
 			votesForGame.forEach(v -> game.setVoteTotal(game.getVoteTotal() + v.getVoteNumber()));
 		}
