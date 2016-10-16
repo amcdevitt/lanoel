@@ -1,5 +1,7 @@
 package computer.lanoel.steam.contracts;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import computer.lanoel.steam.models.SteamGamePriceOverview;
@@ -14,5 +16,5 @@ public class SteamGameInformation {
 	public String detailed_description;
 	public int steam_appid;
 	public String name;
-	
+	public List<Category> categories;
 }
