@@ -131,22 +131,29 @@ public class PreEventManager {
     			.filter(g -> g.getGameKey() == gameKey).collect(Collectors.toList()).get(0);
 	}
 	
+	private String gameNameFilter(String gameName)
+	{
+		String regex = "[\\p{P}\\p{S}]";
+		return gameName.toLowerCase()
+				.replaceAll(regex, "").replaceAll(" ", "").replaceAll("'", "")
+				.replaceAll("-", "").replaceAll("_", "");
+	}
+	
 	public Set<Game> manageGame(Game game) throws Exception
 	{
 		GameDatabase db = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
 		
-		String regex = "[\\p{P}\\p{S}]";
-		
 		Set<String> filteredGameNames = SteamCache.instance().getGames().stream()
-				.map(g -> g.getGameName().toLowerCase().replaceAll(regex, "").replaceAll(" ", "")).collect(Collectors.toSet());
+				.map(g -> gameNameFilter(g.getGameName())).collect(Collectors.toSet());
 		
-		String filteredGameName = game.getGameName().toLowerCase().replaceAll(regex, "").replaceAll(" ", "");
+		String filteredGameName = gameNameFilter(game.getGameName());
 		if(filteredGameNames.contains(filteredGameName))
 		{
 			Game cachedGame = SteamCache.instance().getGames().stream()
-			.filter(g -> g.getGameName().toLowerCase().replaceAll(regex, "").replaceAll(" ", "").equals(filteredGameName))
+			.filter(g -> gameNameFilter(g.getGameName()).equals(filteredGameName))
 			.collect(Collectors.toList()).get(0);
 			game.setGameKey(cachedGame.getGameKey());
+			game.setGameName(cachedGame.getGameName());
 		}
     	
     	if(game.getGameKey() == null)
