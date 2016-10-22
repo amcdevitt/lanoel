@@ -28,6 +28,7 @@ public class InitialPersonInfo {
 		personSet.add(new Person("nickfro@gmail.com",new PlayerSteamInformation(76561197972979911L)).setPersonName("Nick"));
 		personSet.add(new Person("idioSyncr4zy@gmail.com",new PlayerSteamInformation(76561197987038385L)).setPersonName("Steve"));
 		personSet.add(new Person("mikeshaw@gmail.com",new PlayerSteamInformation(76561197993346349L)).setPersonName("Mike"));
+		personSet.add(new Person("ericlski@vt.edu",new PlayerSteamInformation(76561198071713933L)).setPersonName("Eric"));
 		
 		return personSet;		
 	}
