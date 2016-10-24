@@ -27,6 +27,7 @@ public class GameDatabase extends DatabaseManager implements IDatabase {
 		ps.setString(i++, game.getGameName());
 		ps.setString(i++, game.getLocation());
 		ps.setString(i++, game.getRules());
+		ps.setBoolean(i++, false);
 		ps.executeUpdate();
 		
 		
@@ -51,6 +52,7 @@ public class GameDatabase extends DatabaseManager implements IDatabase {
 		ps.setString(i++, game.getGameName());
 		ps.setString(i++, game.getLocation());
 		ps.setString(i++, game.getRules());
+		ps.setBoolean(i++, game.isFree());
 		ps.setLong(i++, game.getGameKey());
 		ps.executeUpdate();
 		
@@ -76,6 +78,7 @@ public class GameDatabase extends DatabaseManager implements IDatabase {
 			gameToReturn.setGameName(rs.getString("GameName"));
 			gameToReturn.setLocation(rs.getString("Location"));
 			gameToReturn.setRules(rs.getString("Rules"));
+			gameToReturn.setFree(rs.getBoolean("IsFree"));
 			
 			String voteSql = "SELECT * FROM Vote where GameKey = ?;";
 			PreparedStatement ps2 = conn.prepareStatement(voteSql);
@@ -112,6 +115,7 @@ public class GameDatabase extends DatabaseManager implements IDatabase {
 			game.setGameName(rs.getString("GameName"));
 			game.setLocation(rs.getString("Location"));
 			game.setRules(rs.getString("Rules"));
+			game.setFree(rs.getBoolean("IsFree"));
 			gameList.add(game);
 			
 			String voteSql = "SELECT * FROM Vote where GameKey = ?;";

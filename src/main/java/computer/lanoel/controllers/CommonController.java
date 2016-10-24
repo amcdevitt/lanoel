@@ -21,6 +21,7 @@ import computer.lanoel.communication.HttpHelper;
 import computer.lanoel.communication.ResponseObject;
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
+import computer.lanoel.contracts.Suggestion;
 import computer.lanoel.contracts.Vote;
 import computer.lanoel.exceptions.BadRequestException;
 import computer.lanoel.exceptions.InvalidSessionException;
@@ -217,5 +218,30 @@ public class CommonController {
     { 
     	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
     	return new ResponseEntity<Set<SteamGame>>(pem.getFullSteamGameList(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
+    }
+    
+    @RequestMapping(
+    		value = "/suggestionlist", 
+    		method = RequestMethod.GET, 
+    		produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Suggestion>> getSuggestionList(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders,
+    		HttpServletRequest request) throws NumberFormatException, Exception
+    { 
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<List<Suggestion>>(pem.getSuggestions(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
+    }
+    
+    @RequestMapping(
+    		value = "/suggestion", 
+    		method = RequestMethod.POST, 
+    		produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Suggestion> manageSuggestion(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders, @RequestBody Suggestion sug,
+    		HttpServletRequest request) 
+    				throws NumberFormatException, Exception
+    { 
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<Suggestion>(pem.manageSuggestion(sug), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
 }

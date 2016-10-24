@@ -6,10 +6,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.mysql.jdbc.Statement;
 
 import computer.lanoel.contracts.Person;
+import computer.lanoel.contracts.Suggestion;
 import computer.lanoel.contracts.Vote;
 import computer.lanoel.platform.database.sql.LanoelSql;
 
@@ -153,5 +155,60 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
 			return rs.getLong("PersonKey");
 		}		
 		return null;
+	}
+	
+	public void insertSuggestion(Suggestion sug) throws Exception
+	{
+		PreparedStatement ps = conn.prepareStatement(LanoelSql.INSERT_SUGGESTION);
+		
+		int i = 1;
+		ps.setString(i++, UUID.randomUUID().toString());
+		ps.setString(i++, sug.Description);
+		ps.setString(i++, sug.Category);
+		ps.execute();
+		conn.commit();
+	}
+	
+	public Suggestion updateSuggestion(Suggestion sug) throws Exception
+	{
+		PreparedStatement ps = conn.prepareStatement(LanoelSql.UPDATE_SUGGESTION);
+		
+		int i = 1;
+		ps.setString(i++, sug.Description);
+		ps.setString(i++, sug.Category);
+		ps.setString(i++, sug.Key);
+		
+		ResultSet rs = ps.executeQuery();
+		
+		if(!rs.isBeforeFirst())
+		{
+			return null;
+		}
+		
+		return sug;
+	}
+	
+	public List<Suggestion> getSuggestions() throws Exception
+	{
+		List<Suggestion> sugList = new ArrayList<Suggestion>();
+		PreparedStatement ps = conn.prepareStatement("SELECT * FROM Suggestion;");
+		
+		ResultSet rs = ps.executeQuery();
+		
+		if(!rs.isBeforeFirst())
+		{
+			return sugList;
+		}
+		
+		while(rs.next())
+		{
+			Suggestion sug = new Suggestion();
+			sug.Key = rs.getString("SuggestionKey");
+			sug.Description = rs.getString("Description");
+			sug.Category = rs.getString("Category");
+			sugList.add(sug);
+		}
+		
+		return sugList;
 	}
 }

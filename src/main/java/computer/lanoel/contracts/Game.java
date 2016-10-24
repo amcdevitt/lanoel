@@ -11,6 +11,7 @@ public class Game implements Comparable<Game>
 	private String Rules;
 	private int VoteTotal;
 	private int uniquePersonVotes;
+	private boolean isFree;
 
 	private SteamGame steamGame;
 	private SteamGameInformation steamInfo;
@@ -114,6 +115,14 @@ public class Game implements Comparable<Game>
 
 	public void setSteamInfo(SteamGameInformation steamInfo) {
 		this.steamInfo = steamInfo;
+	}
+	
+	public boolean isFree() {
+		return isFree;
+	}
+
+	public void setFree(boolean isFree) {
+		this.isFree = isFree;
 	}
 
 	/* (non-Javadoc)

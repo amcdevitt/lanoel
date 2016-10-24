@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS Game
 GameKey BIGINT PRIMARY KEY AUTO_INCREMENT,
 GameName varchar(500),
 Location varchar(2000),
-Rules varchar(5000)
+Rules varchar(5000),
+IsFree BIT(1)
 );
 
 CREATE TABLE IF NOT EXISTS Vote
@@ -50,3 +51,11 @@ CREATE TABLE IF NOT EXISTS PointValues
 Place INT PRIMARY KEY,
 PointValue INT
 );
+
+CREATE TABLE IF NOT EXISTS Suggestion
+(
+SuggestionKey VARCHAR(2000),
+Description VARCHAR(8000),
+Category VARCHAR(2000)
+);
+

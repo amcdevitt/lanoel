@@ -16,6 +16,7 @@ import computer.lanoel.communication.User;
 import computer.lanoel.communication.UserAccount;
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
+import computer.lanoel.contracts.Suggestion;
 import computer.lanoel.contracts.Vote;
 import computer.lanoel.exceptions.BadRequestException;
 import computer.lanoel.exceptions.InvalidSessionException;
@@ -203,5 +204,24 @@ public class PreEventManager {
 	public Set<SteamGame> getFullSteamGameList()
 	{
 		return SteamCache.instance().getFullSteamGameList();
+	}
+	
+	public List<Suggestion> getSuggestions() throws Exception
+	{
+		PersonDatabase personDb = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
+		return personDb.getSuggestions();
+	}
+	
+	public Suggestion manageSuggestion(Suggestion sug) throws Exception
+	{
+		PersonDatabase personDb = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
+		
+		if(sug.Key == null || sug.Key == "")
+		{
+			personDb.insertSuggestion(sug);
+			return sug;
+		}
+		
+		return personDb.updateSuggestion(sug);		
 	}
 }
