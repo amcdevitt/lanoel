@@ -138,12 +138,11 @@ public class SteamCache {
 			Person personFromDb = personsFromDb.stream()
 					.filter(p -> p.getUserName().equals(person.getUserName())).collect(Collectors.toList()).get(0);
 			
-			refreshVotesCache();
-			
 			person.setInformation(personFromDb.getInformation());
 			person.setPersonKey(personFromDb.getPersonKey());
 			person.setTitle(personFromDb.getTitle());
 		}
+		refreshVotesCache();
 	}
 	
 	public void refreshLanoelGameCache() throws Exception
