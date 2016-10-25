@@ -193,7 +193,9 @@ public class PreEventManager {
 	public List<Game> getTopFiveGames() throws Exception
 	{
 		GameDatabase db = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
-    	return db.getTopFiveGames();
+		Set<Long> gameKeys = db.getTopFiveGames().stream().map(g -> g.getGameKey()).collect(Collectors.toSet());
+		return SteamCache.instance().getGames().stream()
+			.filter(g -> gameKeys.contains(g.getGameKey())).collect(Collectors.toList());
 	}
 	
 	public GameOwnership getGameOwnership(Long gameName)
