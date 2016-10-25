@@ -2,6 +2,7 @@ package computer.lanoel.platform;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
@@ -194,8 +195,10 @@ public class PreEventManager {
 	{
 		GameDatabase db = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
 		Set<Long> gameKeys = db.getTopFiveGames().stream().map(g -> g.getGameKey()).collect(Collectors.toSet());
-		return SteamCache.instance().getGames().stream()
+		List<Game> gameList = SteamCache.instance().getGames().stream()
 			.filter(g -> gameKeys.contains(g.getGameKey())).collect(Collectors.toList());
+		Collections.sort(gameList);
+		return gameList;
 	}
 	
 	public GameOwnership getGameOwnership(Long gameName)
