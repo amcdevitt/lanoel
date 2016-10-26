@@ -1,5 +1,6 @@
 package computer.lanoel.steam;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -177,15 +178,20 @@ public class SteamCache {
 		return getGameOwnership(gameList.get(0));
 	}
 	
-	public GameOwnership getGameOwnership(Long gameKey)
+	public List<GameOwnership> getGameOwnership(List<Long> gameKeys)
 	{
-		List<Game> gameList = _lanoelGameCache.stream()
-		.filter(g -> g.getGameKey().equals(gameKey)).collect(Collectors.toList());
-		if(gameList.size() == 0)
+		List<GameOwnership> goList = new ArrayList<GameOwnership>();
+		for(Long gameKey : gameKeys)
 		{
-			return new GameOwnership();
+			List<Game> gameList = _lanoelGameCache.stream()
+				.filter(g -> g.getGameKey().equals(gameKey)).collect(Collectors.toList());
+			if(gameList.size() == 0)
+			{
+				continue;
+			}
+			goList.add(getGameOwnership(gameList.get(0)));
 		}
-		return getGameOwnership(gameList.get(0));
+		return goList;
 	}
 	
 	public GameOwnership getGameOwnership(Game game)

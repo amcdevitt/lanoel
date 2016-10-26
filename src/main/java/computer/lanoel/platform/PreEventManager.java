@@ -1,6 +1,7 @@
 package computer.lanoel.platform;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
@@ -212,7 +213,14 @@ public class PreEventManager {
 	
 	public GameOwnership getGameOwnership(Long gameName)
 	{
-		return SteamCache.instance().getGameOwnership(gameName);
+		return SteamCache.instance().getGameOwnership(Arrays.asList(gameName)).get(0);
+	}
+	
+	public List<GameOwnership> getFullGameOwnership()
+	{
+		List<Long> gameKeys = SteamCache.instance().getGames()
+				.stream().map(Game::getGameKey).collect(Collectors.toList());
+		return SteamCache.instance().getGameOwnership(gameKeys);
 	}
 	
 	public Set<SteamGame> getFullSteamGameList()

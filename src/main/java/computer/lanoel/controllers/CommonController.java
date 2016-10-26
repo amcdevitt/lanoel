@@ -196,6 +196,18 @@ public class CommonController {
     }
     
     @RequestMapping(
+    		value = "/ownership", 
+    		method = RequestMethod.GET, 
+    		produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<GameOwnership>> getFullGameOwnership(
+    		@RequestHeader(required = false) HttpHeaders requestHeaders,
+    		HttpServletRequest request) throws NumberFormatException, Exception
+    {
+    	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<List<GameOwnership>>(pem.getFullGameOwnership(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
+    }    
+    
+    @RequestMapping(
     		value = "/account", 
     		method = RequestMethod.GET, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
