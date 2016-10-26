@@ -61,7 +61,7 @@ public class SteamCache {
 		refreshVotesCache();
 	}
 	
-	private void refreshVotesCache() throws Exception
+	public void refreshVotesCache() throws Exception
 	{
 		VoteDatabase voteDb = (VoteDatabase)DatabaseFactory.getInstance().getDatabase("VOTE");
 		_votesCache = voteDb.getVotes();
