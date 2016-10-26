@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -254,5 +255,18 @@ public class CommonController {
     { 
     	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
     	return new ResponseEntity<Suggestion>(pem.manageSuggestion(sug), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
+    }
+    
+    @Scheduled(fixedDelay = 1000 * 60 * 5)
+    public void refreshCache()
+    {
+    	try
+    	{
+    		SteamCache.instance().refresh();
+    	}
+    	catch(Exception e)
+    	{
+    		// Do Nothing
+    	}
     }
 }
