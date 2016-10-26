@@ -58,16 +58,17 @@ public class SteamCache {
 	{
 		refreshLanoelGameCache();
 		refreshPlayerCache();
+		refreshVotesCache();
 	}
 	
-	public void refreshVotesCache() throws Exception
+	private void refreshVotesCache() throws Exception
 	{
 		VoteDatabase voteDb = (VoteDatabase)DatabaseFactory.getInstance().getDatabase("VOTE");
 		_votesCache = voteDb.getVotes();
 		populateVotes(_votesCache);
 	}
 	
-	public void populateVotes(Set<Vote> votes)
+	private void populateVotes(Set<Vote> votes)
 	{
 		for(Person person : _personCache)
 		{
@@ -110,7 +111,7 @@ public class SteamCache {
 		_steamGameCache.putAll(_fullSteamGameSet.stream().collect(Collectors.toMap(SteamGame::getName, p -> p,(game1, game2) -> {return game1;})));
 	}
 	
-	public void refreshPlayerCache() throws Exception
+	private void refreshPlayerCache() throws Exception
 	{
 		_personCache.clear();
 		_personCache = InitialPersonInfo.personSet();
@@ -142,10 +143,9 @@ public class SteamCache {
 			person.setPersonKey(personFromDb.getPersonKey());
 			person.setTitle(personFromDb.getTitle());
 		}
-		refreshVotesCache();
 	}
 	
-	public void refreshLanoelGameCache() throws Exception
+	private void refreshLanoelGameCache() throws Exception
 	{
 		GameDatabase db = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
 		List<Game> gameList = db.getGameList();
@@ -157,7 +157,6 @@ public class SteamCache {
 			game.setSteamInfo(SteamService.getFullGameInformation(game.getSteamGame().getAppid()).data);
 		}
 		
-		refreshVotesCache();
 		_lanoelGameCache.clear();
 		_lanoelGameCache.addAll(gameList);
 	}

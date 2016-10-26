@@ -105,6 +105,7 @@ public class PreEventManager {
     	if(votesForPerson == null || votesForPerson.isEmpty())
     	{
     		voteDb.insertVote(vote);
+    		SteamCache.instance().refresh();
     		return;
     	}
     	else
@@ -115,11 +116,13 @@ public class PreEventManager {
     			{
     				vote.setVoteKey(recordedVote.getVoteKey());
     				voteDb.updateVote(vote);
+    				SteamCache.instance().refresh();
     				return;
     			}
     		}    		
     		voteDb.insertVote(vote);
     	}
+    	SteamCache.instance().refresh();
 	}
 	
 	public Set<Game> getGameList()
@@ -165,6 +168,7 @@ public class PreEventManager {
     	{
     		db.updateGame(game);
     	}
+    	SteamCache.instance().refresh();
     	return SteamCache.instance().getGames();
 	}
 	
