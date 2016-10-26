@@ -157,8 +157,13 @@ public class PreEventManager {
 			Game cachedGame = SteamCache.instance().getGames().stream()
 			.filter(g -> gameNameFilter(g.getGameName()).equals(filteredGameName))
 			.collect(Collectors.toList()).get(0);
+			
+			String steamGameName = SteamCache.instance().getFullSteamGameList().stream()
+					.filter(g -> gameNameFilter(g.getName()).equals(filteredGameName))
+					.map(g -> g.getName())
+					.collect(Collectors.toList()).get(0);
 			game.setGameKey(cachedGame.getGameKey());
-			game.setGameName(cachedGame.getGameName());
+			game.setGameName((steamGameName == null || steamGameName == "") ? cachedGame.getGameName() : steamGameName);
 		}
     	
     	if(game.getGameKey() == null)
