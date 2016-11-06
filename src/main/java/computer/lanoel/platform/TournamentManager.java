@@ -6,6 +6,7 @@ import java.util.Map;
 import computer.lanoel.communication.LANoelAuth;
 import computer.lanoel.communication.User;
 import computer.lanoel.communication.UserAccount;
+import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Round;
 import computer.lanoel.contracts.Tournament;
@@ -13,6 +14,7 @@ import computer.lanoel.exceptions.BadRequestException;
 import computer.lanoel.exceptions.InvalidSessionException;
 import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.GameDatabase;
+import computer.lanoel.platform.database.PersonDatabase;
 import computer.lanoel.platform.database.TournamentDatabase;
 
 public class TournamentManager {
@@ -80,8 +82,22 @@ public class TournamentManager {
     	}
     	else
     	{
-    		db.insertRound(tournamentKey, round);
+    		Long roundKey = db.insertRound(tournamentKey, round);
+			initializeRound(roundKey);
     	}
+	}
+
+	private void initializeRound(Long roundKey) throws Exception
+	{
+		PersonDatabase pDb = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
+		TournamentDatabase tDb = (TournamentDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
+		List<Person> personList = pDb.getPersonList();
+
+		int i = 1;
+		for(Person person : personList)
+		{
+			tDb.insertRoundStanding(person.getPersonKey(), roundKey, i++);
+		}
 	}
 	
 	public void recordResult(Long tournamentKey, Long personKey, int roundNumber, int place) throws Exception

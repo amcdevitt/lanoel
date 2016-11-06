@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.mysql.jdbc.Statement;
 
@@ -85,6 +86,7 @@ public class TournamentDatabase extends DatabaseManager implements IDatabase {
         }
 		
 		conn.commit();
+		conn.close();
 		return round.getRoundKey();
 	}
 	
@@ -99,6 +101,7 @@ public class TournamentDatabase extends DatabaseManager implements IDatabase {
 		ps.executeUpdate();
 		
 		conn.commit();
+		conn.close();
 	}
 	
 	public void insertRoundStanding(Long personKey, Long roundKey, int place) throws Exception
@@ -221,9 +224,7 @@ public class TournamentDatabase extends DatabaseManager implements IDatabase {
 			Place currentPlace = new Place();
 			Long personKey = roundStandingRs.getLong("PersonKey");
 			Long roundKey = roundStandingRs.getLong("RoundKey");
-			Person tempPerson = new Person();
-			tempPerson.setPersonKey(personKey);
-			Person currentPerson = personList.get(personList.indexOf(tempPerson));
+			Person currentPerson = personList.stream().filter(p -> p.getPersonKey() == personKey).collect(Collectors.toList()).get(0);
 			if(currentPerson == null) continue;
 			int place = roundStandingRs.getInt("Place");
 			String scoreName = (String) (currentPerson.getTitle() == null ? " " : currentPerson.getTitle());

@@ -37,7 +37,7 @@ public class TournamentController {
 	public TournamentController()
 	{
 	}
-	
+	/*
 	@ExceptionHandler(InvalidSessionException.class)
 	@ResponseStatus(HttpStatus.UNAUTHORIZED)
 	public ResponseEntity<Object> HandleSessionError(Exception e)
@@ -64,7 +64,7 @@ public class TournamentController {
 		ro.message = e.getMessage();
  		return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
 	}
-
+*/
     @RequestMapping(
     		value = "/{tournamentKey}", 
     		method = RequestMethod.GET, 
