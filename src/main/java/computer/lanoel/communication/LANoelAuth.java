@@ -22,7 +22,7 @@ public class LANoelAuth
 
 	}
 
-	public static boolean isAdminUser(User user)
+	public static boolean isAdminUser(UserAccount user)
 	{
 		try
 		{

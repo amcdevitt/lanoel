@@ -23,7 +23,7 @@ public class TournamentManager {
 	{
 		getLoggedInUser(user);
 		
-		if(!LANoelAuth.isAdminUser(user))
+		if(!LANoelAuth.isAdminUser(_user))
 		{
 			throw new InvalidSessionException("User is not an admin user", user.getSessionId());
 		}
