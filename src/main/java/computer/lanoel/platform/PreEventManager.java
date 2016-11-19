@@ -35,7 +35,7 @@ public class PreEventManager {
 	private UserAccount _user;
 	private Calendar _voteCutoffTime;
 	
-	private static final String VOTE_CUTOFF_TIME = "2016-11-19T00:00"; // yyyy-MM-dd'T'HH:mm
+	private static final String VOTE_CUTOFF_TIME = "2016-11-19T05:00"; // yyyy-MM-dd'T'HH:mm
 	
 	public PreEventManager(User user) throws Exception
 	{
