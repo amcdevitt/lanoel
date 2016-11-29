@@ -35,6 +35,7 @@ public class SteamCache {
 	private Map<String, SteamGame> _steamGameCache;
 	private Set<SteamGame> _fullSteamGameSet;
 	private Set<Vote> _votesCache;
+	private List<GameOwnership> _ownershipCache;
 	
 	private SteamCache()
 	{
@@ -43,6 +44,7 @@ public class SteamCache {
 		_steamGameCache = new HashMap<String, SteamGame>();
 		_fullSteamGameSet = new HashSet<SteamGame>();
 		_votesCache = new HashSet<Vote>();
+		_ownershipCache = new ArrayList<>();
 	}
 	
 	public static SteamCache instance()
@@ -60,6 +62,7 @@ public class SteamCache {
 		refreshLanoelGameCache();
 		refreshPlayerCache();
 		refreshVotesCache();
+		refreshGameOwnershipCache();
 	}
 	
 	public void refreshVotesCache() throws Exception
@@ -209,21 +212,16 @@ public class SteamCache {
 		}
 		return getGameOwnership(gameList.get(0));
 	}
-	
-	public List<GameOwnership> getGameOwnership(List<Long> gameKeys)
+
+	private void refreshGameOwnershipCache()
 	{
-		List<GameOwnership> goList = new ArrayList<GameOwnership>();
-		for(Long gameKey : gameKeys)
-		{
-			List<Game> gameList = _lanoelGameCache.stream()
-				.filter(g -> g.getGameKey().equals(gameKey)).collect(Collectors.toList());
-			if(gameList.size() == 0)
-			{
-				continue;
-			}
-			goList.add(getGameOwnership(gameList.get(0)));
-		}
-		return goList;
+		List<GameOwnership> tempCache = _lanoelGameCache.stream().map(this::getGameOwnership).collect(Collectors.toList());
+		_ownershipCache = tempCache;
+	}
+	
+	public List<GameOwnership> getGameOwnership()
+	{
+		return _ownershipCache;
 	}
 	
 	public GameOwnership getGameOwnership(Game game)

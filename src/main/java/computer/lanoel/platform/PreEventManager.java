@@ -211,16 +211,15 @@ public class PreEventManager {
 		return gameList;
 	}
 	
-	public GameOwnership getGameOwnership(Long gameName)
+	public GameOwnership getGameOwnership(Long gameKey)
 	{
-		return SteamCache.instance().getGameOwnership(Arrays.asList(gameName)).get(0);
+        Game game = SteamCache.instance().getGames().stream().filter(g -> g.getGameKey().equals(gameKey)).findFirst().get();
+		return SteamCache.instance().getGameOwnership(game);
 	}
 	
 	public List<GameOwnership> getFullGameOwnership()
 	{
-		List<Long> gameKeys = SteamCache.instance().getGames()
-				.stream().map(Game::getGameKey).collect(Collectors.toList());
-		return SteamCache.instance().getGameOwnership(gameKeys);
+		return SteamCache.instance().getGameOwnership();
 	}
 	
 	public Set<SteamGame> getFullSteamGameList()
