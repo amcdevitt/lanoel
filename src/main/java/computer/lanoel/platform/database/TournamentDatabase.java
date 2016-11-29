@@ -356,19 +356,19 @@ public class TournamentDatabase extends DatabaseManager implements IDatabase {
 	public void updatePointValues(Map<Integer, Integer> pointMap) throws Exception
 	{
 		Iterator it = pointMap.entrySet().iterator();
-		
+
+		PreparedStatement ps = conn.prepareStatement("UPDATE PointValues SET PointValue=? WHERE Place=?;");
 		while(it.hasNext())
 		{
-			PreparedStatement ps = conn.prepareStatement("UPDATE PointValues SET PointValue=? WHERE Place=?;");
 			Map.Entry<Integer, Integer> pair = (Map.Entry)it.next();
 			ps.setInt(1, pair.getValue());
 			ps.setInt(2, pair.getKey());
 			it.remove();
 			
-			ps.executeUpdate();
-			conn.commit();
-			
+			ps.addBatch();
 		}
+		ps.executeBatch();
+		conn.commit();
 	}
 	
 	public Map<Integer, Integer> getPointValues() throws Exception
