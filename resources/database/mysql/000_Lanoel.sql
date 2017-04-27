@@ -24,37 +24,9 @@ GameKey BIGINT,
 VoteNumber INT
 );
 
-CREATE TABLE IF NOT EXISTS Tournament
-(
-TournamentKey BIGINT PRIMARY KEY AUTO_INCREMENT,
-TournamentName varchar(100)
-);
-
-CREATE TABLE IF NOT EXISTS Round
-(
-RoundKey BIGINT PRIMARY KEY AUTO_INCREMENT,
-TournamentKey BIGINT,
-RoundNumber INT,
-GameKey BIGINT
-);
-
-CREATE TABLE IF NOT EXISTS RoundStanding
-(
-RoundKey BIGINT,
-PersonKey BIGINT,
-Place INT,
-UNIQUE (RoundKey, PersonKey)
-);
-
-CREATE TABLE IF NOT EXISTS PointValues
-(
-Place INT PRIMARY KEY,
-PointValue INT
-);
-
 CREATE TABLE IF NOT EXISTS Suggestion
 (
-SuggestionKey VARCHAR(2000),
+SuggestionKey VARCHAR(2000) PRIMARY KEY,
 Description VARCHAR(8000),
 Category VARCHAR(2000)
 );

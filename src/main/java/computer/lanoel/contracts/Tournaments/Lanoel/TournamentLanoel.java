@@ -1,12 +1,15 @@
-package computer.lanoel.contracts;
+package computer.lanoel.contracts.Tournaments.Lanoel;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import computer.lanoel.contracts.Place;
+import computer.lanoel.contracts.Round;
+import computer.lanoel.contracts.Score;
 
-public class Tournament
+public class TournamentLanoel
 {
 
 	private Long tournamentKey;
@@ -16,7 +19,7 @@ public class Tournament
 	@JsonIgnore
 	private Map<Integer, Integer> pointValues;
 	
-	public Tournament()
+	public TournamentLanoel()
 	{
 		scores = new ArrayList<Score>();
 		roundList = new ArrayList<Round>();

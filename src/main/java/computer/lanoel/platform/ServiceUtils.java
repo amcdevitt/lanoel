@@ -3,16 +3,13 @@
  */
 package computer.lanoel.platform;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.TimeZone;
-
-import computer.lanoel.platform.database.DatabaseManager;
 /**
  * @author amcdevitt
  *
@@ -45,5 +42,16 @@ public class ServiceUtils {
 	private static Map<String, String> getEnvironmentVariables()
 	{
 		return System.getenv();
+	}
+
+	public static Connection getDBConnection() throws SQLException
+	{
+		Map<String, String> connInfo = ServiceUtils.getDatabaseProperties();
+		DriverManager.setLoginTimeout(5);
+		Connection conn = DriverManager.getConnection(
+				connInfo.get("url"), connInfo.get("username"), connInfo.get("password"));
+		conn.setAutoCommit(false);
+
+		return conn;
 	}
 }

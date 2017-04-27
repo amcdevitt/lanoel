@@ -4,37 +4,33 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+
+import computer.lanoel.contracts.Tournaments.Lanoel.TournamentLanoel;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import computer.lanoel.communication.HttpHelper;
-import computer.lanoel.communication.ResponseObject;
 import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Round;
-import computer.lanoel.contracts.Tournament;
-import computer.lanoel.exceptions.BadRequestException;
-import computer.lanoel.exceptions.InvalidSessionException;
-import computer.lanoel.platform.TournamentManager;
+import computer.lanoel.platform.LanoelManager;
 import computer.lanoel.platform.database.DatabaseFactory;
-import computer.lanoel.platform.database.TournamentDatabase;
+import computer.lanoel.platform.database.TournamentLanoelDatabase;
 
 @RestController
 @RequestMapping("/tournament")
-public class TournamentController {
+public class LanoelController {
 
 	public int _requestCount = 0;
 	
-	public TournamentController()
+	public LanoelController()
 	{
 	}
 	/*
@@ -69,14 +65,14 @@ public class TournamentController {
     		value = "/{tournamentKey}", 
     		method = RequestMethod.GET, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Tournament> getTournament(
+    public ResponseEntity<TournamentLanoel> getTournament(
     		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long tournamentKey) 
     				throws Exception
     {
-    	TournamentDatabase db = (TournamentDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
-    	Tournament tourn = db.getTournament(tournamentKey);
+    	TournamentLanoelDatabase db = (TournamentLanoelDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
+    	TournamentLanoel tourn = db.getTournament(tournamentKey);
     	tourn.populateScore();
-    	return new ResponseEntity<Tournament>(tourn, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+    	return new ResponseEntity<TournamentLanoel>(tourn, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     }
     
     @RequestMapping(
@@ -88,7 +84,7 @@ public class TournamentController {
     		@PathVariable String tournamentName, HttpServletRequest request) 
     				throws Exception
     { 
-    	TournamentManager tm = new TournamentManager(HttpHelper.getUserFromRequest(request));
+    	LanoelManager tm = new LanoelManager(HttpHelper.getUserFromRequest(request));
     	Long tournamentId = tm.createTournament(tournamentName);
     	return new ResponseEntity<Long>(tournamentId, HttpHelper.commonHttpHeaders(tm.getSessionIdForUser()), HttpStatus.OK);
     }
@@ -102,7 +98,7 @@ public class TournamentController {
     		@RequestBody Round round, HttpServletRequest request) 
     				throws Exception
     {
-    	TournamentManager tm = new TournamentManager(HttpHelper.getUserFromRequest(request));
+    	LanoelManager tm = new LanoelManager(HttpHelper.getUserFromRequest(request));
     	tm.createRound(round, tournamentKey);
     	
     	return new ResponseEntity<Object>(null, HttpHelper.commonHttpHeaders(tm.getSessionIdForUser()), HttpStatus.OK);
@@ -117,7 +113,7 @@ public class TournamentController {
     		@PathVariable int roundNumber, @PathVariable Long personKey, @PathVariable int place, HttpServletRequest request) 
     				throws Exception
     {
-    	TournamentManager tm = new TournamentManager(HttpHelper.getUserFromRequest(request));
+    	LanoelManager tm = new LanoelManager(HttpHelper.getUserFromRequest(request));
     	tm.recordResult(tournamentKey, personKey, roundNumber, place);
     	return new ResponseEntity<Object>(null, HttpHelper.commonHttpHeaders(tm.getSessionIdForUser()), HttpStatus.OK);
     }
@@ -131,7 +127,7 @@ public class TournamentController {
     		@PathVariable int roundNumber, @RequestBody List<Place> places, HttpServletRequest request) 
     				throws Exception
     {
-    	TournamentManager tm = new TournamentManager(HttpHelper.getUserFromRequest(request));
+    	LanoelManager tm = new LanoelManager(HttpHelper.getUserFromRequest(request));
     	tm.updateScores(tournamentKey, roundNumber, places);
     	return new ResponseEntity<Object>(null, HttpHelper.commonHttpHeaders(tm.getSessionIdForUser()), HttpStatus.OK);
     }
@@ -145,7 +141,7 @@ public class TournamentController {
     		@PathVariable int roundNumber, HttpServletRequest request) 
     				throws Exception
     { 
-    	TournamentManager tm = new TournamentManager(HttpHelper.getUserFromRequest(request));
+    	LanoelManager tm = new LanoelManager(HttpHelper.getUserFromRequest(request));
     	tm.resetRoundScores(tournamentKey, roundNumber);
     	
     	return new ResponseEntity<Object>(null, HttpHelper.commonHttpHeaders(tm.getSessionIdForUser()), HttpStatus.OK);
@@ -160,7 +156,7 @@ public class TournamentController {
     		@RequestBody Map<Integer, Integer> pointMap, HttpServletRequest request) 
     				throws Exception
     {
-    	TournamentManager tm = new TournamentManager(HttpHelper.getUserFromRequest(request));
+    	LanoelManager tm = new LanoelManager(HttpHelper.getUserFromRequest(request));
     	tm.setPointValues(pointMap);
     	return new ResponseEntity<String>("success", HttpHelper.commonHttpHeaders(tm.getSessionIdForUser()), HttpStatus.OK);
     }

@@ -35,11 +35,11 @@ import computer.lanoel.steam.contracts.SteamGame;
 
 @RestController
 @RequestMapping("/lanoel")
-public class CommonController {
+public class VotingController {
 
 	public int _requestCount = 0;
 	
-	public CommonController()
+	public VotingController()
 	{
 	}
 	

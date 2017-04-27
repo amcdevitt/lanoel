@@ -9,19 +9,19 @@ import computer.lanoel.communication.UserAccount;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Round;
-import computer.lanoel.contracts.Tournament;
+import computer.lanoel.contracts.Tournaments.Lanoel.TournamentLanoel;
 import computer.lanoel.exceptions.BadRequestException;
 import computer.lanoel.exceptions.InvalidSessionException;
 import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.GameDatabase;
 import computer.lanoel.platform.database.PersonDatabase;
-import computer.lanoel.platform.database.TournamentDatabase;
+import computer.lanoel.platform.database.TournamentLanoelDatabase;
 
-public class TournamentManager {
+public class LanoelManager {
 
 	private UserAccount _user;
 	
-	public TournamentManager(User user) throws Exception
+	public LanoelManager(User user) throws Exception
 	{
 		getLoggedInUser(user);
 		
@@ -49,15 +49,15 @@ public class TournamentManager {
 	
 	public Long createTournament(String tournamentName) throws Exception
 	{
-		Tournament tourn = new Tournament();
+		TournamentLanoel tourn = new TournamentLanoel();
     	tourn.setTournamentName(tournamentName);
-    	TournamentDatabase db = (TournamentDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
+    	TournamentLanoelDatabase db = (TournamentLanoelDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
     	return db.insertTournament(tourn);
 	}
 	
 	public void createRound(Round round, Long tournamentKey) throws Exception
 	{
-		TournamentDatabase db = (TournamentDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
+		TournamentLanoelDatabase db = (TournamentLanoelDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
 		GameDatabase gameDb = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
 		
 		if(round.getGame() == null)
@@ -90,7 +90,7 @@ public class TournamentManager {
 	private void initializeRound(Long roundKey) throws Exception
 	{
 		PersonDatabase pDb = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
-		TournamentDatabase tDb = (TournamentDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
+		TournamentLanoelDatabase tDb = (TournamentLanoelDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
 		List<Person> personList = pDb.getPersonList();
 
 		int i = 1;
@@ -102,7 +102,7 @@ public class TournamentManager {
 	
 	public void recordResult(Long tournamentKey, Long personKey, int roundNumber, int place) throws Exception
 	{   
-		TournamentDatabase db = (TournamentDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
+		TournamentLanoelDatabase db = (TournamentLanoelDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
     	List<Round> roundList = db.getRounds(tournamentKey);
     	Round tempRound = new Round();
     	tempRound.setRoundNumber(roundNumber);
@@ -121,7 +121,7 @@ public class TournamentManager {
 	
 	public void updateScores(Long tournamentKey, int roundNumber, List<Place> places) throws Exception
 	{
-		TournamentDatabase db = (TournamentDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
+		TournamentLanoelDatabase db = (TournamentLanoelDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
     	List<Round> roundList = db.getTournament(tournamentKey).getRounds();
     	Round tempRound = new Round();
     	tempRound.setRoundNumber(roundNumber);
@@ -140,7 +140,7 @@ public class TournamentManager {
 	
 	public void resetRoundScores(Long tournamentKey, int roundNumber) throws Exception
 	{
-		TournamentDatabase db = (TournamentDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
+		TournamentLanoelDatabase db = (TournamentLanoelDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
 		List<Round> roundList = db.getTournament(tournamentKey).getRounds();
     	Round tempRound = new Round();
     	tempRound.setRoundNumber(roundNumber);
@@ -159,7 +159,7 @@ public class TournamentManager {
 	
 	public void setPointValues(Map<Integer, Integer> pointMap) throws Exception
 	{
-		TournamentDatabase db = (TournamentDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
+		TournamentLanoelDatabase db = (TournamentLanoelDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
 		db.updatePointValues(pointMap);
 	}
 }
