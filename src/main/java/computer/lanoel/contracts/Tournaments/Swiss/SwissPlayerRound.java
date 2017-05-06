@@ -10,5 +10,5 @@ public class SwissPlayerRound {
     public Integer gamesWon;
     public Integer draws;
     public boolean drop;
-
+    public boolean roundWon;
 }

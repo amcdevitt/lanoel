@@ -5,6 +5,7 @@ package computer.lanoel.contracts.Tournaments.Swiss;
  */
 public class SwissRoundResult {
 
+    public Integer roundNumber;
     public Long playerOneKey;
     public Long playerTwoKey;
     public Integer gamesWonPlayerOne;

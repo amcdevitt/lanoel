@@ -28,7 +28,7 @@ public static void main(String[] args) {
 		{
 			DatabaseUpgrader dbu = new DatabaseUpgrader(ServiceUtils.getDBConnection());
 			File resFile = new File(Resources.getResource("database/mysql").getFile());
-			if(dbu.upgradeDatabase(resFile.getAbsolutePath()))
+			if(!dbu.upgradeDatabase(resFile.getAbsolutePath()))
 			{
 				throw new Exception("Could not upgrade database");
 			}

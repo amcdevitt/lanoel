@@ -41,4 +41,10 @@ public class DatabaseManager implements IDatabase{
 	{
 		this.conn = conn;
 	}
+
+	public void commitAndClose() throws SQLException
+	{
+		this.conn.commit();
+		this.conn.close();
+	}
 }

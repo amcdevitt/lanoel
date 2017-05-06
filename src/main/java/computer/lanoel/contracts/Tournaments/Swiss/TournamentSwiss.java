@@ -1,7 +1,11 @@
 package computer.lanoel.contracts.Tournaments.Swiss;
 
 import computer.lanoel.contracts.Tournaments.Tournament;
+import computer.lanoel.contracts.Tournaments.TournamentParticipant;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -17,5 +21,15 @@ public class TournamentSwiss extends Tournament {
     public boolean canPlaySamePlayerMoreThanOnce;
 
     public Set<SwissPlayerRound> rounds;
+    public List<Pair<Long, Long>> currentRoundPairings;
 
+    public List<Pair<Long, Long>> getCurrentRoundPairings() {
+        return currentRoundPairings;
+    }
+
+    public void setCurrentRoundPairings(List<Pair<Long, Long>> currentRoundPairings) {
+        this.currentRoundPairings = currentRoundPairings;
+    }
+
+    public Map<TournamentParticipant, Integer> score;
 }
