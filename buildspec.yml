@@ -1,0 +1,24 @@
+version: 0.2
+
+env:
+  variables:
+    SERVICE: "lanoel"
+    IMAGE_REPO: "919378322281.dkr.ecr.us-east-1.amazonaws.com"
+phases:
+  pre_build:
+    commands:
+      - echo $SERVICE
+      - export BUILD_NUMBER="$(curl -s https://pfg5vswacc.execute-api.us-east-1.amazonaws.com/prod/buildnumber/$SERVICE)"
+      - eval $(aws ecr get-login --region us-east-1)
+  build:
+    commands:
+      - docker build -t $SERVICE:$BUILD_NUMBER .
+      - docker tag $SERVICE:$BUILD_NUMBER $IMAGE_REPO/$SERVICE:$BUILD_NUMBER
+      - docker push $IMAGE_REPO/$SERVICE:$BUILD_NUMBER
+  post_build:
+    commands:
+      - sed -e "s/\${repo}/$IMAGE_REPO/" -e "s/\${image}/$SERVICE/" -e "s/\${tag}/$BUILD_NUMBER/" build/elasticbeanstalk.json >> Dockerrun.aws.json
+artifacts:
+  files:
+    - Dockerrun.aws.json
+    - .ebextensions/**/*

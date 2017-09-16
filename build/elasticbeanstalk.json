@@ -1,0 +1,11 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image" : {
+    "Name" : "${repo}/${image}:${tag}"
+  },
+  "Ports" : [
+    {
+      "ContainerPort" : "80"
+    }
+  ]
+}
