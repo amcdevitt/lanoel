@@ -3,6 +3,8 @@
  */
 package computer.lanoel.platform;
 
+import com.google.gson.Gson;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

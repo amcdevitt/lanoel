@@ -165,9 +165,7 @@ public class TournamentSwissManager {
             return getListPairsFromArray(partList.toArray(new TournamentParticipant[0]));
         }
 
-        List<TournamentParticipant> orderedPartList = ts.score.entrySet().stream().sorted(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey).collect(Collectors.toList());
-        return getListPairsFromArray(orderedPartList.toArray(new TournamentParticipant[0]));
+        return getListPairsFromArray(ts.participants.toArray(new TournamentParticipant[0]));
     }
 
     private List<Pair<Long, Long>> getListPairsFromArray(TournamentParticipant[] array)
@@ -186,9 +184,9 @@ public class TournamentSwissManager {
         return pairs;
     }
 
-    private Map<TournamentParticipant, Integer> getScoreUpdate(TournamentSwiss ts)
+    private Map<String, Integer> getScoreUpdate(TournamentSwiss ts)
     {
-        Map<TournamentParticipant, Integer> scoremap = new HashMap<>();
+        Map<String, Integer> scoremap = new HashMap<>();
 
         for(TournamentParticipant part : ts.participants)
         {
@@ -201,7 +199,7 @@ public class TournamentSwissManager {
                 score += round.draws * ts.pointsPerDraw;
                 score += round.roundWon ? ts.pointsPerRoundWon : 0;
             }
-            scoremap.put(part, score);
+            scoremap.put(part.participantName, score);
         }
 
         return scoremap;

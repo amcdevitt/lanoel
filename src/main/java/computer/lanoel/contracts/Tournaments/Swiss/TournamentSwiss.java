@@ -31,5 +31,5 @@ public class TournamentSwiss extends Tournament {
         this.currentRoundPairings = currentRoundPairings;
     }
 
-    public Map<TournamentParticipant, Integer> score;
+    public Map<String, Integer> score;
 }

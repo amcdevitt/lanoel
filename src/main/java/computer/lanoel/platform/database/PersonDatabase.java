@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.google.gson.Gson;
 import com.mysql.jdbc.Statement;
 
 import computer.lanoel.contracts.Person;
@@ -24,12 +25,11 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
 	public Long insertPerson(Person person) throws Exception
 	{
 		PreparedStatement ps = conn.prepareStatement(LanoelSql.INSERT_PERSON, Statement.RETURN_GENERATED_KEYS);
+
+		Gson gson = new Gson();
 		
 		int i = 1;
-		ps.setString(i++, person.getPersonName());
-		ps.setString(i++, person.getTitle());
-		ps.setString(i++, person.getInformation());
-		ps.setString(i++, person.getUserName());
+		ps.setString(i++, gson.toJson(person));
 		ps.executeUpdate();
 		
 		
@@ -38,7 +38,7 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
                 person.setPersonKey(generatedKeys.getLong(1));
             }
             else {
-                throw new SQLException("Item price insert failed, no ID obtained.");
+                throw new SQLException("Person insert failed, no ID obtained.");
             }
         }
 		
@@ -49,12 +49,10 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
 	public Long updatePerson(Person person) throws Exception
 	{
 		PreparedStatement ps = conn.prepareStatement(LanoelSql.UPDATE_PERSON);
-		
+
+		Gson gson = new Gson();
 		int i = 1;
-		ps.setString(i++, person.getPersonName());
-		ps.setString(i++, person.getTitle());
-		ps.setString(i++, person.getInformation());
-		ps.setString(i++, person.getUserName());
+		ps.setString(i++, gson.toJson(person));
 		ps.setLong(i++, person.getPersonKey());
 		ps.executeUpdate();
 		
@@ -65,69 +63,73 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
 	public Person getPerson(Long personKey) throws Exception
 	{
 		if(personKey == null) return null;
-		
-		VoteDatabase voteDb = (VoteDatabase) DatabaseFactory.getInstance().getDatabase("VOTE", conn);
-		GameDatabase gameDb = (GameDatabase) DatabaseFactory.getInstance().getDatabase("GAME", conn);
-		
+
 		String selectSql = "SELECT * FROM Person WHERE PersonKey = ?";
 		PreparedStatement ps = conn.prepareStatement(selectSql);
 		ps.setLong(1, personKey);
 		ResultSet rs = ps.executeQuery();
+		Gson gson = new Gson();
 
 		if(!rs.isBeforeFirst()) return null; //No results
 		
 		Person personToReturn = new Person();
 		while(rs.next())
 		{
+			personToReturn = gson.fromJson(rs.getString("PersonData"), Person.class);
 			personToReturn.setPersonKey(rs.getLong("PersonKey"));
-			personToReturn.setPersonName(rs.getString("PersonName"));
-			personToReturn.setTitle(rs.getString("Title"));
-			personToReturn.setInformation(rs.getString("Information"));
-			personToReturn.setUserName(rs.getString("UserName"));
 		}
-		
-		List<Vote> votes = voteDb.getVotesForPerson(personToReturn.getPersonKey());
-		if(votes == null) return personToReturn;
+		return getPersonDetails(personKey, personToReturn);
+	}
+
+	public Person getPersonDetails(Long personKey, Person person) throws Exception
+	{
+		VoteDatabase voteDb = (VoteDatabase) DatabaseFactory.getInstance().getDatabase("VOTE", conn);
+		GameDatabase gameDb = (GameDatabase) DatabaseFactory.getInstance().getDatabase("GAME", conn);
+		List<Vote> votes = voteDb.getVotesForPerson(personKey);
+		if(votes == null) return person;
 		for(Vote vote : votes)
 		{
 			if(vote.getVoteNumber() == 1)
 			{
-				personToReturn.setGameVote1(gameDb.getGame(vote.getGameKey()).getGameName());
+				person.setGameVote1(gameDb.getGame(vote.getGameKey()).getGameName());
 			}
-			
+
 			if(vote.getVoteNumber() == 2)
 			{
-				personToReturn.setGameVote2(gameDb.getGame(vote.getGameKey()).getGameName());
+				person.setGameVote2(gameDb.getGame(vote.getGameKey()).getGameName());
 			}
-			
+
 			if(vote.getVoteNumber() == 3)
 			{
-				personToReturn.setGameVote3(gameDb.getGame(vote.getGameKey()).getGameName());
+				person.setGameVote3(gameDb.getGame(vote.getGameKey()).getGameName());
 			}
 		}
-		
-		return personToReturn;
+		return person;
 	}
 	
 	public List<Person> getPersonList() throws Exception
 	{
+		Gson gson = new Gson();
 		String selectSql = "SELECT * FROM Person;";
 		PreparedStatement ps = conn.prepareStatement(selectSql);
 		ResultSet rs = ps.executeQuery();
 
 		if(!rs.isBeforeFirst()) new ArrayList<Person>();
 		
-		List<Person> personList = new ArrayList<Person>();
+		List<Person> personList = new ArrayList<>();
 		while(rs.next())
 		{
-			personList.add(getPerson(rs.getLong("PersonKey")));				
+			Person person = gson.fromJson(rs.getString("PersonData"), Person.class);
+			person.setPersonKey(rs.getLong("PersonKey"));
+			person = getPersonDetails(person.getPersonKey(), person);
+			personList.add(person);
 		}
 		return personList;
 	}
 	
 	public Long getPersonKey(String personName) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement("SELECT PersonKey FROM Person WHERE PersonName like ?;");
+		PreparedStatement ps = conn.prepareStatement("SELECT PersonKey FROM Person WHERE PersonData->'$.PersonName' like ?;");
 		
 		String tempName = null;
 		try

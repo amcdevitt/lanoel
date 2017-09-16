@@ -61,7 +61,7 @@ public class VoteDatabase extends DatabaseManager implements IDatabase {
 	
 	public List<Vote> getVotesForPerson(Long personKey) throws Exception
 	{
-		List<Vote> voteListToReturn = new ArrayList<Vote>();
+		List<Vote> voteListToReturn = new ArrayList<>();
 		
 		if(personKey == null) return voteListToReturn;
 		
