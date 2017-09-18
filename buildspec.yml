@@ -7,7 +7,8 @@ env:
 phases:
   pre_build:
     commands:
-      - echo $SERVICE 
+      - echo $SERVICE
+      - export BUILD_NUMBER="$(curl -s https://pfg5vswacc.execute-api.us-east-1.amazonaws.com/prod/buildnumber/$SERVICE)"
       - eval $(aws ecr get-login --region us-east-1)
   build:
     commands:
