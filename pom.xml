@@ -17,6 +17,11 @@
     </parent>
     
     <dependencies>
+		<dependency>
+			<groupId>database</groupId>
+			<artifactId>databaseUpgrader</artifactId>
+			<version>1.105</version>
+		</dependency>
 	    <dependency>
 	    	<groupId>org.springframework.boot</groupId>
 	    	<artifactId>spring-boot-starter-web</artifactId>
@@ -91,12 +96,29 @@
 			</resource>
 		</resources>
     </build>
+
+	<distributionManagement>
+		<repository>
+			<id>omegasixcloud-artifacts</id>
+			<name>Omega-Six Cloud Artifacts</name>
+			<url>https://s3.amazonaws.com/com.omegasixcloud.artifacts</url>
+		</repository>
+	</distributionManagement>
     
     <repositories>
 	    <repository>
 	    	<id>spring-releases</id>
 	    	<url>https://repo.spring.io/libs-release</url>
 	    </repository>
+		<repository>
+			<id>omegasixcloud-artifacts</id>
+			<name>Omega-Six Cloud Artifacts</name>
+			<url>https://s3.amazonaws.com/com.omegasixcloud.artifacts</url>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</releases>
+		</repository>
     </repositories>
     <pluginRepositories>
     	<pluginRepository>
