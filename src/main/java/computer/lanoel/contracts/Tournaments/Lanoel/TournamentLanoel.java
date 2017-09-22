@@ -6,17 +6,15 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import computer.lanoel.contracts.Place;
-import computer.lanoel.contracts.Round;
-import computer.lanoel.contracts.Score;
+import computer.lanoel.contracts.Tournaments.Tournament;
 
-public class TournamentLanoel
+public class TournamentLanoel extends Tournament
 {
 
 	private Long tournamentKey;
 	private String tournamentName;
 	private List<Round> roundList;
 	private List<Score> scores;
-	@JsonIgnore
 	private Map<Integer, Integer> pointValues;
 	
 	public TournamentLanoel()

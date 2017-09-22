@@ -1,23 +1,13 @@
 package computer.lanoel.controllers;
 
 import computer.lanoel.communication.HttpHelper;
-import computer.lanoel.contracts.Place;
-import computer.lanoel.contracts.Round;
-import computer.lanoel.contracts.Tournaments.Lanoel.TournamentLanoel;
 import computer.lanoel.contracts.Tournaments.Swiss.TournamentSwiss;
-import computer.lanoel.platform.LanoelManager;
 import computer.lanoel.platform.TournamentSwissManager;
-import computer.lanoel.platform.database.DatabaseFactory;
-import computer.lanoel.platform.database.TournamentLanoelDatabase;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/tournament/swiss")

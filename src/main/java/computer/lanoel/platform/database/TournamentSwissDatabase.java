@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by amcde on 3/30/2017.
@@ -211,13 +212,13 @@ public class TournamentSwissDatabase extends TournamentDatabase implements IData
 
     public TournamentSwiss updateTournamentName(Tournament tournament) throws SQLException
     {
-        super.updateTournamentName(tournament);
+        super.updateTournament(tournament);
         return getTournament(tournament.tournamentKey);
     }
 
     public List<Tournament> getTournamentList()
     {
-        return super.getTournamentList("SWISS");
+        return super.getTournamentList().stream().filter(t -> t.type.equalsIgnoreCase("swiss")).collect(Collectors.toList());
     }
 
     public List<Pair<Long, Long>> getCurrentRoundPairings(Long tournamentKey) throws SQLException

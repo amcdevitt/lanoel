@@ -1,5 +1,7 @@
 package computer.lanoel.platform.database;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import computer.lanoel.contracts.Tournaments.Tournament;
 import computer.lanoel.contracts.Tournaments.TournamentParticipant;
 
@@ -11,15 +13,19 @@ import java.util.*;
  */
 public class TournamentDatabase extends DatabaseManager {
 
-    public TournamentDatabase(Connection conn){super(conn);}
+    private Gson _gson;
+    public TournamentDatabase(Connection conn){
+        super(conn);
+        _gson = new GsonBuilder().setExclusionStrategies(new DatabaseJsonExclusions()).create();
+    }
 
     protected TournamentParticipant addParticipant(Long tournamentKey, TournamentParticipant part) throws SQLException
     {
-        String sql = "INSERT INTO TournamentParticipant (TournamentKey, ParticipantName)" +
+        String sql = "INSERT INTO TournamentParticipant (TournamentKey, TournamentParticipantData)" +
                 " VALUES (?,?);";
         PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         ps.setLong(1, tournamentKey);
-        ps.setString(2, part.participantName);
+        ps.setString(2, _gson.toJson(part));
 
         ps.execute();
 
@@ -34,11 +40,11 @@ public class TournamentDatabase extends DatabaseManager {
         return part;
     }
 
-    protected TournamentParticipant updateParticipantName(TournamentParticipant part) throws SQLException
+    protected TournamentParticipant updateParticipant(TournamentParticipant part) throws SQLException
     {
-        String sql = "UPDATE TournamentParticipant SET ParticipantName = ? WHERE TournamentParticipantKey = ?;";
+        String sql = "UPDATE TournamentParticipant SET TournamentParticipantData = ? WHERE TournamentParticipantKey = ?;";
         PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setString(1, part.participantName);
+        ps.setString(1, _gson.toJson(part));
         ps.setLong(2, part.tournamentParticipantKey);
 
         ps.executeUpdate();
@@ -71,9 +77,8 @@ public class TournamentDatabase extends DatabaseManager {
 
             while(rs.next())
             {
-                TournamentParticipant tp = new TournamentParticipant();
+                TournamentParticipant tp = _gson.fromJson(rs.getString("TournamentParticipantData"), TournamentParticipant.class);
                 tp.tournamentParticipantKey = rs.getLong("TournamentParticipantKey");
-                tp.participantName = rs.getString("ParticipantName");
                 tpList.add(tp);
             }
 
@@ -88,12 +93,9 @@ public class TournamentDatabase extends DatabaseManager {
 
     protected Tournament createTournament(Tournament tournament) throws SQLException
     {
-        String sql = "INSERT INTO Tournament (TournamentName, Type, Created) " +
-                "VALUES (?,?,?);";
+        String sql = "INSERT INTO Tournament (TournamentData) VALUES (?);";
         PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-        ps.setString(1, tournament.tournamentName);
-        ps.setString(2, tournament.type);
-        ps.setTimestamp(3, new Timestamp(Calendar.getInstance().getTimeInMillis()));
+        ps.setString(1, _gson.toJson(tournament));
 
         ps.execute();
 
@@ -108,25 +110,24 @@ public class TournamentDatabase extends DatabaseManager {
         return tournament;
     }
 
-    protected Tournament updateTournamentName(Tournament tournament) throws SQLException
+    protected Tournament updateTournament(Tournament tournament) throws SQLException
     {
-        String sql = "UPDATE Tournament SET TournamentName = ? WHERE TournamentKey = ?;";
+        String sql = "UPDATE Tournament SET TournamentData = ? WHERE TournamentKey = ?;";
         PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setString(1, tournament.tournamentName);
+        ps.setString(1, _gson.toJson(tournament));
         ps.setLong(2, tournament.tournamentKey);
         ps.executeUpdate();
 
         return tournament;
     }
 
-    protected List<Tournament> getTournamentList(String type)
+    protected List<Tournament> getTournamentList()
     {
-        String sql = "SELECT * FROM Tournament WHERE Type = ? ORDER BY Created DESC";
+        String sql = "SELECT * FROM Tournament ORDER BY Created DESC";
         List<Tournament> tList = new ArrayList<>();
 
         try (PreparedStatement ps = conn.prepareStatement(sql))
         {
-            ps.setString(1, type);
             ResultSet rs = ps.executeQuery();
 
             if(!rs.isBeforeFirst())
@@ -136,10 +137,8 @@ public class TournamentDatabase extends DatabaseManager {
 
             while(rs.next())
             {
-                Tournament t = new Tournament();
+                Tournament t = _gson.fromJson(rs.getString("TournamentData"), Tournament.class);
                 t.tournamentKey = rs.getLong("TournamentKey");
-                t.tournamentName = rs.getString("TournamentName");
-                t.type = rs.getString("Type");
                 t.setCreatedFromSql(rs.getDate("Created"));
                 tList.add(t);
             }

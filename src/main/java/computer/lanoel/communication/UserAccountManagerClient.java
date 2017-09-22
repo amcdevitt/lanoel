@@ -17,7 +17,7 @@ public class UserAccountManagerClient
 	
 	public UserAccount getUserAccount(String sessionid) throws Exception
 	{
-		String url = BaseUrl + "/internal/user";
+		String url = BaseUrl + "/accounts/user";
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("sessionid", sessionid);

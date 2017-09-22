@@ -1,4 +1,4 @@
-package computer.lanoel.contracts;
+package computer.lanoel.contracts.Tournaments.Lanoel;
 
 
 public class Score

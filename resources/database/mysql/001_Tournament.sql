@@ -2,15 +2,13 @@ CREATE TABLE IF NOT EXISTS TournamentParticipant
 (
 TournamentParticipantKey BIGINT PRIMARY KEY AUTO_INCREMENT,
 TournamentKey BIGINT,
-ParticipantName VARCHAR(255),
-UserName VARCHAR(255)
+TournamentParticipantData JSON
 );
 
 CREATE TABLE IF NOT EXISTS Tournament
 (
 TournamentKey BIGINT PRIMARY KEY AUTO_INCREMENT,
-TournamentName VARCHAR(100),
-Type VARCHAR(255),
+TournamentData JSON,
 Created DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

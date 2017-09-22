@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mysql.jdbc.Statement;
 
 import computer.lanoel.contracts.Game;
@@ -15,8 +17,10 @@ import computer.lanoel.platform.database.sql.LanoelSql;
 
 public class GameDatabase extends DatabaseManager implements IDatabase {
 
+	private Gson _gson;
 	public GameDatabase(Connection connection) {
 		super(connection);
+		_gson = new GsonBuilder().setExclusionStrategies(new DatabaseJsonExclusions()).create();
 	}
 
 	public Long insertGame(Game game) throws Exception
@@ -24,10 +28,7 @@ public class GameDatabase extends DatabaseManager implements IDatabase {
 		PreparedStatement ps = conn.prepareStatement(LanoelSql.INSERT_GAME, Statement.RETURN_GENERATED_KEYS);
 		
 		int i = 1;
-		ps.setString(i++, game.getGameName());
-		ps.setString(i++, game.getLocation());
-		ps.setString(i++, game.getRules());
-		ps.setBoolean(i++, false);
+		ps.setString(i++, _gson.toJson(game));
 		ps.executeUpdate();
 		
 		
@@ -49,10 +50,7 @@ public class GameDatabase extends DatabaseManager implements IDatabase {
 		PreparedStatement ps = conn.prepareStatement(LanoelSql.UPDATE_GAME);
 		
 		int i = 1;
-		ps.setString(i++, game.getGameName());
-		ps.setString(i++, game.getLocation());
-		ps.setString(i++, game.getRules());
-		ps.setBoolean(i++, game.isFree());
+		ps.setString(i++, _gson.toJson(game));
 		ps.setLong(i++, game.getGameKey());
 		ps.executeUpdate();
 		
@@ -74,12 +72,10 @@ public class GameDatabase extends DatabaseManager implements IDatabase {
 		Game gameToReturn = new Game();
 		while(rs.next())
 		{
+			gameToReturn = _gson.fromJson(rs.getString("GameData"), Game.class);
 			gameToReturn.setGameKey(rs.getLong("GameKey"));
-			gameToReturn.setGameName(rs.getString("GameName"));
-			gameToReturn.setLocation(rs.getString("Location"));
-			gameToReturn.setRules(rs.getString("Rules"));
-			gameToReturn.setFree(rs.getBoolean("IsFree"));
-			
+
+
 			String voteSql = "SELECT * FROM Vote where GameKey = ?;";
 			PreparedStatement ps2 = conn.prepareStatement(voteSql);
 			ps2.setLong(1, gameToReturn.getGameKey());
@@ -110,12 +106,8 @@ public class GameDatabase extends DatabaseManager implements IDatabase {
 		List<Game> gameList = new ArrayList<Game>();
 		while(rs.next())
 		{
-			Game game = new Game();
+			Game game = _gson.fromJson(rs.getString("GameData"), Game.class);
 			game.setGameKey(rs.getLong("GameKey"));
-			game.setGameName(rs.getString("GameName"));
-			game.setLocation(rs.getString("Location"));
-			game.setRules(rs.getString("Rules"));
-			game.setFree(rs.getBoolean("IsFree"));
 			gameList.add(game);
 			
 			String voteSql = "SELECT * FROM Vote where GameKey = ?;";
@@ -142,8 +134,11 @@ public class GameDatabase extends DatabaseManager implements IDatabase {
 	{
 		List<Game> gameList = getGameList();
 		
-		String gamesByUniquePersonVotesSql = "select GameKey, count(distinct PersonKey) as UniqueVotes "
-				+ "from Vote group by GameKey order by count(distinct PersonKey) desc;";
+		String gamesByUniquePersonVotesSql = "select g.*, count(distinct v.PersonKey) as UniqueVotes " +
+				"from Vote v join Game g " +
+				"on g.GameKey = v.GameKey " +
+				"group by v.GameKey order by count(distinct v.PersonKey) " +
+				"desc limit 5";
 		
 		PreparedStatement ps = conn.prepareStatement(gamesByUniquePersonVotesSql);
 		ResultSet rs = ps.executeQuery();

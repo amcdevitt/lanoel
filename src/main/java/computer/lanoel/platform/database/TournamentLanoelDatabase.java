@@ -16,11 +16,11 @@ import com.mysql.jdbc.Statement;
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Place;
-import computer.lanoel.contracts.Round;
+import computer.lanoel.contracts.Tournaments.Lanoel.Round;
 import computer.lanoel.contracts.Tournaments.Lanoel.TournamentLanoel;
 import computer.lanoel.platform.database.sql.TournamentLanoelSql;
 
-public class TournamentLanoelDatabase extends DatabaseManager implements IDatabase {
+public class TournamentLanoelDatabase extends TournamentDatabase implements IDatabase {
 
 	public TournamentLanoelDatabase(Connection connection) {
 		super(connection);
@@ -28,36 +28,24 @@ public class TournamentLanoelDatabase extends DatabaseManager implements IDataba
 
 	public Long insertTournament(TournamentLanoel tourn) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement(TournamentLanoelSql.tournamentInsertSql(), Statement.RETURN_GENERATED_KEYS);
-		
-		int i = 1;
-		ps.setString(i++, tourn.getTournamentName());
-		ps.executeUpdate();
-		
-		
-		try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-            if (generatedKeys.next()) {
-                tourn.setTournamentKey(generatedKeys.getLong(1));
-            }
-            else {
-                throw new SQLException("Item price insert failed, no ID obtained.");
-            }
-        }
-		
-		conn.commit();
-		return tourn.getTournamentKey();
+		try
+		{
+			return super.createTournament(tourn).tournamentKey;
+		} finally
+		{
+			conn.commit();
+		}
 	}
 	
 	public void updateTournament(TournamentLanoel tourn) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement(TournamentLanoelSql.tournamentUpdateSql());
-		
-		int i = 1;
-		ps.setString(i++, tourn.getTournamentName());
-		ps.setLong(i++, tourn.getTournamentKey());
-		ps.executeUpdate();
-		
-		conn.commit();
+		try
+		{
+			super.updateTournament(tourn);
+		} finally
+		{
+			conn.commit();
+		}
 	}
 	
 	public Long insertRound(Long tournamentKey, Round round) throws Exception

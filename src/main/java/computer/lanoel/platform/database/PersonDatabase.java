@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mysql.jdbc.Statement;
 
 import computer.lanoel.contracts.Person;
@@ -18,18 +19,19 @@ import computer.lanoel.platform.database.sql.LanoelSql;
 
 public class PersonDatabase extends DatabaseManager implements IDatabase {
 
+	private Gson _gson;
 	public PersonDatabase(Connection connection) {
+
 		super(connection);
+		_gson = new GsonBuilder().setExclusionStrategies(new DatabaseJsonExclusions()).create();
 	}
 	
 	public Long insertPerson(Person person) throws Exception
 	{
 		PreparedStatement ps = conn.prepareStatement(LanoelSql.INSERT_PERSON, Statement.RETURN_GENERATED_KEYS);
-
-		Gson gson = new Gson();
 		
 		int i = 1;
-		ps.setString(i++, gson.toJson(person));
+		ps.setString(i++, _gson.toJson(person));
 		ps.executeUpdate();
 		
 		
@@ -50,9 +52,8 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
 	{
 		PreparedStatement ps = conn.prepareStatement(LanoelSql.UPDATE_PERSON);
 
-		Gson gson = new Gson();
 		int i = 1;
-		ps.setString(i++, gson.toJson(person));
+		ps.setString(i++, _gson.toJson(person));
 		ps.setLong(i++, person.getPersonKey());
 		ps.executeUpdate();
 		
@@ -68,14 +69,13 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
 		PreparedStatement ps = conn.prepareStatement(selectSql);
 		ps.setLong(1, personKey);
 		ResultSet rs = ps.executeQuery();
-		Gson gson = new Gson();
 
 		if(!rs.isBeforeFirst()) return null; //No results
 		
 		Person personToReturn = new Person();
 		while(rs.next())
 		{
-			personToReturn = gson.fromJson(rs.getString("PersonData"), Person.class);
+			personToReturn = _gson.fromJson(rs.getString("PersonData"), Person.class);
 			personToReturn.setPersonKey(rs.getLong("PersonKey"));
 		}
 		return getPersonDetails(personKey, personToReturn);
@@ -109,7 +109,6 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
 	
 	public List<Person> getPersonList() throws Exception
 	{
-		Gson gson = new Gson();
 		String selectSql = "SELECT * FROM Person;";
 		PreparedStatement ps = conn.prepareStatement(selectSql);
 		ResultSet rs = ps.executeQuery();
@@ -119,7 +118,7 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
 		List<Person> personList = new ArrayList<>();
 		while(rs.next())
 		{
-			Person person = gson.fromJson(rs.getString("PersonData"), Person.class);
+			Person person = _gson.fromJson(rs.getString("PersonData"), Person.class);
 			person.setPersonKey(rs.getLong("PersonKey"));
 			person = getPersonDetails(person.getPersonKey(), person);
 			personList.add(person);

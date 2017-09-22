@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import computer.lanoel.communication.HttpHelper;
 import computer.lanoel.contracts.Place;
-import computer.lanoel.contracts.Round;
+import computer.lanoel.contracts.Tournaments.Lanoel.Round;
 import computer.lanoel.platform.LanoelManager;
 import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.TournamentLanoelDatabase;

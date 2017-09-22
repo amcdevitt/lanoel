@@ -8,7 +8,7 @@ import computer.lanoel.communication.User;
 import computer.lanoel.communication.UserAccount;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Place;
-import computer.lanoel.contracts.Round;
+import computer.lanoel.contracts.Tournaments.Lanoel.Round;
 import computer.lanoel.contracts.Tournaments.Lanoel.TournamentLanoel;
 import computer.lanoel.exceptions.BadRequestException;
 import computer.lanoel.exceptions.InvalidSessionException;

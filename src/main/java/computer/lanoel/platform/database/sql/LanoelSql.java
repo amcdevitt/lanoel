@@ -15,7 +15,7 @@ public class LanoelSql {
 			+ "INSERT INTO Person (PersonData) VALUES (?);";
 
 	public static final String INSERT_GAME = ""
-			+ "INSERT INTO Game (GameKey, GameData) VALUES (?,?);";
+			+ "INSERT INTO Game (GameData) VALUES (?);";
 
 	public static final String INSERT_VOTE = ""
 			+ "INSERT INTO Vote (PersonKey, GameKey, VoteNumber) VALUES (?,?,?);";

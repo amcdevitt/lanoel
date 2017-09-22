@@ -1,9 +1,11 @@
-package computer.lanoel.contracts;
+package computer.lanoel.contracts.Tournaments.Lanoel;
 
 import java.util.ArrayList;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import computer.lanoel.contracts.Game;
+import computer.lanoel.contracts.Place;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Round implements Comparable<Round>
