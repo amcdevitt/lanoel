@@ -1,132 +1,72 @@
 package computer.lanoel.platform.database;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mysql.jdbc.Statement;
 
 import computer.lanoel.contracts.Vote;
 import computer.lanoel.platform.database.sql.LanoelSql;
 
-public class VoteDatabase extends DatabaseManager implements IDatabase {
+public class VoteDatabase {
 
-	public VoteDatabase(Connection connection) {
-		super(connection);
+	private static Gson _gson;
+	public VoteDatabase()
+	{
+		_gson = new GsonBuilder().setExclusionStrategies(new DatabaseJsonExclusions()).create();
 	}
 
 	public Long insertVote(Vote vote) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement(LanoelSql.INSERT_VOTE, Statement.RETURN_GENERATED_KEYS);
-		
-		int i = 1;
-		ps.setLong(i++, vote.getPersonKey());
-		ps.setLong(i++, vote.getGameKey());
-		ps.setInt(i++, vote.getVoteNumber());
-		ps.executeUpdate();
-		
-		
-		try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-            if (generatedKeys.next()) {
-            	vote.setVoteKey(generatedKeys.getLong(1));
-            }
-            else {
-                throw new SQLException("Item price insert failed, no ID obtained.");
-            }
-        }
-		
-		conn.commit();
-		return vote.getVoteKey();
+		QueryParameter qp1 = new QueryParameter(vote.getPersonKey(), Types.BIGINT);
+		QueryParameter qp2 = new QueryParameter(vote.getGameKey(), Types.BIGINT);
+		QueryParameter qp3 = new QueryParameter(vote.getVoteNumber(), Types.INTEGER);
+
+		return DBConnection.executeUpdateReturnGeneratedKey(LanoelSql.INSERT_VOTE, Arrays.asList(qp1, qp2, qp3));
 	}
 	
 	public Long updateVote(Vote vote) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement(LanoelSql.UPDATE_VOTE);
-		
-		int i = 1;
-		ps.setLong(i++, vote.getPersonKey());
-		ps.setLong(i++, vote.getGameKey());
-		ps.setInt(i++, vote.getVoteNumber());
-		ps.setLong(i++, vote.getVoteKey());
-		ps.executeUpdate();
-		
-		conn.commit();
+		QueryParameter qp1 = new QueryParameter(vote.getPersonKey(), Types.BIGINT);
+		QueryParameter qp2 = new QueryParameter(vote.getGameKey(), Types.BIGINT);
+		QueryParameter qp3 = new QueryParameter(vote.getVoteNumber(), Types.INTEGER);
+		QueryParameter qp4 = new QueryParameter(vote.getVoteKey(), Types.BIGINT);
+
+		DBConnection.executeUpdateWithParams(LanoelSql.UPDATE_VOTE, Arrays.asList(qp1, qp2, qp3, qp4));
+
 		return vote.getVoteKey();
 	}
 	
 	public List<Vote> getVotesForPerson(Long personKey) throws Exception
 	{
-		List<Vote> voteListToReturn = new ArrayList<>();
-		
-		if(personKey == null) return voteListToReturn;
-		
 		String selectSql = "SELECT * FROM Vote WHERE PersonKey = ?;";
-		PreparedStatement ps = conn.prepareStatement(selectSql);
-		ps.setLong(1, personKey);
-		ResultSet rs = ps.executeQuery();
+		QueryParameter qp = new QueryParameter(personKey, Types.BIGINT);
 
-		if(!rs.isBeforeFirst()) return voteListToReturn;
-		
-		while(rs.next())
-		{
-			Vote vote = new Vote();
-			vote.setPersonKey(rs.getLong("PersonKey"));
-			vote.setGameKey(rs.getLong("GameKey"));
-			vote.setVoteNumber(rs.getInt("VoteNumber"));
-			vote.setVoteKey(rs.getLong("VoteKey"));
-			voteListToReturn.add(vote);
-		}
-		return voteListToReturn;
+		return DBConnection.queryWithParameters(selectSql, Arrays.asList(qp), VoteDatabase::getVoteFromResultSet);
 	}
 	
-	public Vote getVote(Long voteKey) throws Exception
+	public List<Vote> getVotes() throws Exception
 	{
-		if(voteKey == null) return null;
-		
-		String selectSql = "SELECT * FROM Vote WHERE VoteKey = ?";
-		PreparedStatement ps = conn.prepareStatement(selectSql);
-		ps.setLong(1, voteKey);
-		ResultSet rs = ps.executeQuery();
-
-		if(!rs.isBeforeFirst()) return null; //No results
-		
-		Vote voteToReturn = new Vote();
-		while(rs.next())
-		{
-			voteToReturn.setPersonKey(rs.getLong("PersonKey"));
-			voteToReturn.setGameKey(rs.getLong("GameKey"));
-			voteToReturn.setVoteNumber(rs.getInt("VoteNumber"));
-			voteToReturn.setVoteKey(rs.getLong("VoteKey"));
-		}
-		return voteToReturn;
-	}
-	
-	public Set<Vote> getVotes() throws Exception
-	{
-		Set<Vote> votes = new HashSet<Vote>();
-		
 		String voteSelectSql = "SELECT * FROM Vote";
-		PreparedStatement ps = conn.prepareStatement(voteSelectSql);
-		
-		ResultSet rs = ps.executeQuery();
-		
-		if(!rs.isBeforeFirst()) return votes;
-		
-		while(rs.next())
+		return DBConnection.queryWithParameters(voteSelectSql, new ArrayList<>(), VoteDatabase::getVoteFromResultSet);
+	}
+
+	public static Vote getVoteFromResultSet(ResultSet rs)
+	{
+		try
 		{
 			Vote vote = new Vote();
 			vote.setPersonKey(rs.getLong("PersonKey"));
 			vote.setGameKey(rs.getLong("GameKey"));
 			vote.setVoteNumber(rs.getInt("VoteNumber"));
 			vote.setVoteKey(rs.getLong("VoteKey"));
-			votes.add(vote);
+			return vote;
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+			return null;
 		}
-		
-		return votes;
 	}
 }

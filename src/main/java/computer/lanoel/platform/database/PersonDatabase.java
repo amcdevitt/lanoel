@@ -1,63 +1,40 @@
 package computer.lanoel.platform.database;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.sql.*;
+import java.util.*;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.mysql.jdbc.Statement;
 
+import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Suggestion;
 import computer.lanoel.contracts.Vote;
 import computer.lanoel.platform.database.sql.LanoelSql;
 
-public class PersonDatabase extends DatabaseManager implements IDatabase {
+public class PersonDatabase {
 
-	private Gson _gson;
-	public PersonDatabase(Connection connection) {
-
-		super(connection);
+	private static Gson _gson;
+	public PersonDatabase() {
 		_gson = new GsonBuilder().setExclusionStrategies(new DatabaseJsonExclusions()).create();
 	}
 	
 	public Long insertPerson(Person person) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement(LanoelSql.INSERT_PERSON, Statement.RETURN_GENERATED_KEYS);
-		
-		int i = 1;
-		ps.setString(i++, _gson.toJson(person));
-		ps.executeUpdate();
-		
-		
-		try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-            if (generatedKeys.next()) {
-                person.setPersonKey(generatedKeys.getLong(1));
-            }
-            else {
-                throw new SQLException("Person insert failed, no ID obtained.");
-            }
-        }
-		
-		conn.commit();
+		QueryParameter qp = new QueryParameter(person, Types.OTHER);
+		person.setPersonKey(DBConnection.queryWithParametersGetGeneratedKey(
+				LanoelSql.INSERT_PERSON, Arrays.asList(qp)));
+
 		return person.getPersonKey();
 	}
 	
 	public Long updatePerson(Person person) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement(LanoelSql.UPDATE_PERSON);
+		QueryParameter qp1 = new QueryParameter(_gson.toJson(person), Types.OTHER);
+		QueryParameter qp2 = new QueryParameter(person.getPersonKey(), Types.BIGINT);
 
-		int i = 1;
-		ps.setString(i++, _gson.toJson(person));
-		ps.setLong(i++, person.getPersonKey());
-		ps.executeUpdate();
-		
-		conn.commit();
+		DBConnection.executeWithParams(LanoelSql.UPDATE_PERSON, Arrays.asList(qp1, qp2));
+
 		return person.getPersonKey();
 	}
 
@@ -66,42 +43,41 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
 		if(personKey == null) return null;
 
 		String selectSql = "SELECT * FROM Person WHERE PersonKey = ?";
-		PreparedStatement ps = conn.prepareStatement(selectSql);
-		ps.setLong(1, personKey);
-		ResultSet rs = ps.executeQuery();
 
-		if(!rs.isBeforeFirst()) return null; //No results
-		
-		Person personToReturn = new Person();
-		while(rs.next())
-		{
-			personToReturn = _gson.fromJson(rs.getString("PersonData"), Person.class);
-			personToReturn.setPersonKey(rs.getLong("PersonKey"));
-		}
-		return getPersonDetails(personKey, personToReturn);
+		QueryParameter qp1 = new QueryParameter(personKey, Types.BIGINT);
+
+		List<Person> personList = DBConnection.queryWithParameters(selectSql,
+				Arrays.asList(qp1), PersonDatabase::getPersonFromResultSet);
+		return personList.stream().findFirst().get();
 	}
 
-	public Person getPersonDetails(Long personKey, Person person) throws Exception
+	public Person getPersonDetails(Person person) throws Exception
 	{
-		VoteDatabase voteDb = (VoteDatabase) DatabaseFactory.getInstance().getDatabase("VOTE", conn);
-		GameDatabase gameDb = (GameDatabase) DatabaseFactory.getInstance().getDatabase("GAME", conn);
-		List<Vote> votes = voteDb.getVotesForPerson(personKey);
+		VoteDatabase voteDb = new VoteDatabase();
+		GameDatabase gameDb = new GameDatabase();
+		List<Vote> votes = voteDb.getVotesForPerson(person.getPersonKey());
+		List<Game> gameList = gameDb.getGameList();
 		if(votes == null) return person;
 		for(Vote vote : votes)
 		{
+			Optional<Game> game = gameList.stream().filter(g -> g.getGameKey().equals(vote.getGameKey())).findFirst();
+			if(!game.isPresent())
+			{
+				continue;
+			}
 			if(vote.getVoteNumber() == 1)
 			{
-				person.setGameVote1(gameDb.getGame(vote.getGameKey()).getGameName());
+				person.setGameVote1(game.get().getGameName());
 			}
 
 			if(vote.getVoteNumber() == 2)
 			{
-				person.setGameVote2(gameDb.getGame(vote.getGameKey()).getGameName());
+				person.setGameVote2(game.get().getGameName());
 			}
 
 			if(vote.getVoteNumber() == 3)
 			{
-				person.setGameVote3(gameDb.getGame(vote.getGameKey()).getGameName());
+				person.setGameVote3(game.get().getGameName());
 			}
 		}
 		return person;
@@ -110,26 +86,21 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
 	public List<Person> getPersonList() throws Exception
 	{
 		String selectSql = "SELECT * FROM Person;";
-		PreparedStatement ps = conn.prepareStatement(selectSql);
-		ResultSet rs = ps.executeQuery();
 
-		if(!rs.isBeforeFirst()) new ArrayList<Person>();
-		
-		List<Person> personList = new ArrayList<>();
-		while(rs.next())
+		List<Person> personList = DBConnection.queryWithParameters(
+				selectSql, new ArrayList<>(), PersonDatabase::getPersonFromResultSet);
+
+		for(Person person : personList)
 		{
-			Person person = _gson.fromJson(rs.getString("PersonData"), Person.class);
-			person.setPersonKey(rs.getLong("PersonKey"));
-			person = getPersonDetails(person.getPersonKey(), person);
-			personList.add(person);
+			getPersonDetails(person);
 		}
+
 		return personList;
 	}
 	
 	public Long getPersonKey(String personName) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement("SELECT PersonKey FROM Person WHERE PersonData->'$.PersonName' like ?;");
-		
+		String sql = "SELECT PersonKey FROM Person WHERE PersonData->'$.PersonName' like ?;";
 		String tempName = null;
 		try
 		{
@@ -139,77 +110,82 @@ public class PersonDatabase extends DatabaseManager implements IDatabase {
 			//We might not have a space
 			tempName = personName;
 		}
-		
+
 		//if this didn't get set to anything, set it
 		if(tempName == null)
 		{
 			tempName = personName;
 		}
-		
-		ps.setString(1, "%" + tempName.trim());
-		ResultSet rs = ps.executeQuery();
-		
-		if(!rs.isBeforeFirst()) return null;
-		
-		while(rs.next())
-		{
-			return rs.getLong("PersonKey");
-		}		
-		return null;
+
+		QueryParameter qp = new QueryParameter("%" + tempName.trim(), Types.VARCHAR);
+		List<Long> keys = DBConnection.queryWithParameters(sql, Arrays.asList(qp), PersonDatabase::getFirstColumn);
+		return keys.stream().findFirst().get();
 	}
-	
+
+
 	public void insertSuggestion(Suggestion sug) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement(LanoelSql.INSERT_SUGGESTION);
-		
-		int i = 1;
-		ps.setString(i++, UUID.randomUUID().toString());
-		ps.setString(i++, sug.Description);
-		ps.setString(i++, sug.Category);
-		ps.execute();
-		conn.commit();
+		QueryParameter qp1 = new QueryParameter(UUID.randomUUID().toString(), Types.VARCHAR);
+		QueryParameter qp2 = new QueryParameter(_gson.toJson(sug), Types.OTHER);
+
+		DBConnection.executeWithParams(LanoelSql.INSERT_SUGGESTION, Arrays.asList(qp1, qp2));
 	}
 	
 	public Suggestion updateSuggestion(Suggestion sug) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement(LanoelSql.UPDATE_SUGGESTION);
-		
-		int i = 1;
-		ps.setString(i++, sug.Description);
-		ps.setString(i++, sug.Category);
-		ps.setString(i++, sug.Key);
-		
-		ResultSet rs = ps.executeQuery();
-		
-		if(!rs.isBeforeFirst())
-		{
-			return null;
-		}
-		
+		QueryParameter qp1 = new QueryParameter(sug.Description, Types.VARCHAR);
+		QueryParameter qp2 = new QueryParameter(sug.Category, Types.VARCHAR);
+		QueryParameter qp3 = new QueryParameter(sug.Key, Types.VARCHAR);
+
+		DBConnection.executeWithParams(LanoelSql.INSERT_SUGGESTION, Arrays.asList(qp1, qp2, qp3));
+
 		return sug;
 	}
 	
 	public List<Suggestion> getSuggestions() throws Exception
 	{
-		List<Suggestion> sugList = new ArrayList<Suggestion>();
-		PreparedStatement ps = conn.prepareStatement("SELECT * FROM Suggestion;");
-		
-		ResultSet rs = ps.executeQuery();
-		
-		if(!rs.isBeforeFirst())
+		String sql = "SELECT * FROM Suggestion;";
+		return DBConnection.queryWithParameters(sql, new ArrayList<>(), PersonDatabase::getSuggestionFromResultSet);
+	}
+
+	public static Person getPersonFromResultSet(ResultSet rs)
+	{
+		try
 		{
-			return sugList;
+			Person person = _gson.fromJson(rs.getString("PersonData"), Person.class);
+			person.setPersonKey(rs.getLong("PersonKey"));
+			return person;
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+			return null;
 		}
-		
-		while(rs.next())
+	}
+
+	public static Long getFirstColumn(ResultSet rs)
+	{
+		try
+		{
+			return rs.getLong(1);
+		} catch (Exception e)
+		{
+			return 0L;
+		}
+	}
+
+	public static Suggestion getSuggestionFromResultSet(ResultSet rs)
+	{
+		try
 		{
 			Suggestion sug = new Suggestion();
 			sug.Key = rs.getString("SuggestionKey");
 			sug.Description = rs.getString("Description");
 			sug.Category = rs.getString("Category");
-			sugList.add(sug);
+			return sug;
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+			return null;
 		}
-		
-		return sugList;
 	}
 }

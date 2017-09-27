@@ -20,7 +20,7 @@ public class TournamentSwiss extends Tournament {
     public Integer pointsPerDraw;
     public boolean canPlaySamePlayerMoreThanOnce;
 
-    public Set<SwissPlayerRound> rounds;
+    public List<SwissPlayerRound> rounds;
     public List<Pair<Long, Long>> currentRoundPairings;
 
     public List<Pair<Long, Long>> getCurrentRoundPairings() {

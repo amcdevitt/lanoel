@@ -2,22 +2,22 @@ package computer.lanoel.contracts;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import computer.lanoel.platform.database.DatabaseFactory;
+import computer.lanoel.contracts.Tournaments.TournamentParticipant;
 import computer.lanoel.platform.database.TournamentLanoelDatabase;
 
 public class Place
 {
 	private int place;
-	private String person;
 	private int pointValue;
 	@JsonIgnore
 	private Long roundKey;
+	private TournamentParticipant participant;
 	
 	private void populatePointValues() throws Exception
 	{
 		try
 		{
-			TournamentLanoelDatabase db = (TournamentLanoelDatabase)DatabaseFactory.getInstance().getDatabase("VOTE");
+			TournamentLanoelDatabase db = new TournamentLanoelDatabase();
 			pointValue = db.getPointValues().get(place);
 		} catch (Exception e)
 		{
@@ -54,16 +54,6 @@ public class Place
 		return true;
 	}
 
-	public String getPerson()
-	{
-		return person;
-	}
-
-	public void setPerson(String person)
-	{
-		this.person = person;
-	}
-
 	public int getPointValue()
 	{
 		return pointValue;
@@ -94,5 +84,13 @@ public class Place
 	public void setRoundKey(Long roundKey)
 	{
 		this.roundKey = roundKey;
+	}
+
+	public TournamentParticipant getParticipant() {
+		return participant;
+	}
+
+	public void setParticipant(TournamentParticipant participant) {
+		this.participant = participant;
 	}
 }

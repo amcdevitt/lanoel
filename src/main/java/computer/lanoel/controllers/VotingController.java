@@ -27,8 +27,6 @@ import computer.lanoel.contracts.Vote;
 import computer.lanoel.exceptions.BadRequestException;
 import computer.lanoel.exceptions.InvalidSessionException;
 import computer.lanoel.platform.PreEventManager;
-import computer.lanoel.platform.database.DatabaseFactory;
-import computer.lanoel.platform.database.IDatabase;
 import computer.lanoel.steam.SteamCache;
 import computer.lanoel.steam.contracts.GameOwnership;
 import computer.lanoel.steam.contracts.SteamGame;
@@ -80,13 +78,7 @@ public class VotingController {
     	
     	HttpStatus status = HttpStatus.OK;
     	String responseMessage = "Hello";
-    	IDatabase db = DatabaseFactory.getInstance().getDatabase("DEFAULT");
-    	if(!db.storageAvailable())
-    	{
-    		status = HttpStatus.SERVICE_UNAVAILABLE;
-    		responseMessage = "Unavailable";
-    	}
-		return new ResponseEntity<String>(responseMessage, HttpHelper.commonHttpHeaders(), status);
+		return new ResponseEntity<>(responseMessage, HttpHelper.commonHttpHeaders(), status);
     }
     
 

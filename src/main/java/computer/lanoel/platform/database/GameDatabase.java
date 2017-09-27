@@ -1,10 +1,8 @@
 package computer.lanoel.platform.database;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,152 +11,104 @@ import com.google.gson.GsonBuilder;
 import com.mysql.jdbc.Statement;
 
 import computer.lanoel.contracts.Game;
+import computer.lanoel.contracts.Vote;
 import computer.lanoel.platform.database.sql.LanoelSql;
+import org.springframework.beans.factory.annotation.Autowired;
 
-public class GameDatabase extends DatabaseManager implements IDatabase {
+import javax.management.Query;
+import javax.sql.DataSource;
 
-	private Gson _gson;
-	public GameDatabase(Connection connection) {
-		super(connection);
+public class GameDatabase{
+
+	private static Gson _gson;
+	public GameDatabase() {
 		_gson = new GsonBuilder().setExclusionStrategies(new DatabaseJsonExclusions()).create();
 	}
 
 	public Long insertGame(Game game) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement(LanoelSql.INSERT_GAME, Statement.RETURN_GENERATED_KEYS);
-		
-		int i = 1;
-		ps.setString(i++, _gson.toJson(game));
-		ps.executeUpdate();
-		
-		
-		try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-            if (generatedKeys.next()) {
-            	game.setGameKey(generatedKeys.getLong(1));
-            }
-            else {
-                throw new SQLException("Item price insert failed, no ID obtained.");
-            }
-        }
-		
-		conn.commit();
-		return game.getGameKey();
+		QueryParameter qp = new QueryParameter(_gson.toJson(game), Types.OTHER);
+		return DBConnection.queryWithParametersGetGeneratedKey(LanoelSql.INSERT_GAME, Arrays.asList(qp));
 	}
 	
 	public Long updateGame(Game game) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement(LanoelSql.UPDATE_GAME);
-		
-		int i = 1;
-		ps.setString(i++, _gson.toJson(game));
-		ps.setLong(i++, game.getGameKey());
-		ps.executeUpdate();
-		
-		conn.commit();
+		QueryParameter qp = new QueryParameter(_gson.toJson(game), Types.OTHER);
+		DBConnection.executeWithParams(LanoelSql.UPDATE_GAME, Arrays.asList(qp));
 		return game.getGameKey();
 	}
 	
 	public Game getGame(Long gameKey) throws Exception
 	{
-		if(gameKey == null) return null;
-		
-		String selectSql = "SELECT * FROM Game WHERE GameKey = ?";
-		PreparedStatement ps = conn.prepareStatement(selectSql);
-		ps.setLong(1, gameKey);
-		ResultSet rs = ps.executeQuery();
-
-		if(!rs.isBeforeFirst()) return null; //No results
-		
-		Game gameToReturn = new Game();
-		while(rs.next())
-		{
-			gameToReturn = _gson.fromJson(rs.getString("GameData"), Game.class);
-			gameToReturn.setGameKey(rs.getLong("GameKey"));
-
-
-			String voteSql = "SELECT * FROM Vote where GameKey = ?;";
-			PreparedStatement ps2 = conn.prepareStatement(voteSql);
-			ps2.setLong(1, gameToReturn.getGameKey());
-			ResultSet rs2 = ps2.executeQuery();
-			
-			if(!rs2.isBeforeFirst()) continue;
-			
-			int total = 0;
-			
-			while(rs2.next())
-			{
-				total += rs2.getInt("VoteNumber");
-			}
-			
-			gameToReturn.setVoteTotal(total);
-		}
-		return gameToReturn;
+		return getGameList().stream().filter(g -> g.getGameKey().equals(gameKey)).findFirst().get();
 	}
 	
-	public List<Game> getGameList() throws Exception
+	public List<Game> getGameList() throws SQLException
 	{
-		String selectSql = "SELECT * FROM Game;";
-		PreparedStatement ps = conn.prepareStatement(selectSql);
-		ResultSet rs = ps.executeQuery();
+		String selectSql = "SELECT * FROM Game";
+		String voteSql = "SELECT * FROM Vote where GameKey = ?;";
 
-		if(!rs.isBeforeFirst()) new ArrayList<Game>();
-		
-		List<Game> gameList = new ArrayList<Game>();
-		while(rs.next())
+		List<Game> gameList = DBConnection.queryWithParameters(selectSql, Arrays.asList(), GameDatabase::getGameFromResultSet);
+
+		for(Game game : gameList)
 		{
-			Game game = _gson.fromJson(rs.getString("GameData"), Game.class);
-			game.setGameKey(rs.getLong("GameKey"));
-			gameList.add(game);
-			
-			String voteSql = "SELECT * FROM Vote where GameKey = ?;";
-			PreparedStatement ps2 = conn.prepareStatement(voteSql);
-			ps2.setLong(1, game.getGameKey());
-			ResultSet rs2 = ps2.executeQuery();
-			
-			if(!rs2.isBeforeFirst()) continue;
-			
-			int total = 0;
-			
-			while(rs2.next())
+			QueryParameter qp = new QueryParameter(game.getGameKey(), Types.BIGINT);
+			List<Vote> votes = DBConnection.queryWithParameters(voteSql, Arrays.asList(qp), VoteDatabase::getVoteFromResultSet);
+
+			if(null == votes || votes.size() == 0)
 			{
-				total += rs2.getInt("VoteNumber");
+				game.setVoteTotal(0);
+			} else
+			{
+				int total = 0;
+				for(Vote vote : votes)
+				{
+					total += vote.getVoteNumber();
+				}
+				game.setVoteTotal(total);
 			}
-			
-			game.setVoteTotal(total);
-			
 		}
 		return gameList;
 	}
 	
 	public List<Game> getTopFiveGames() throws Exception
 	{
-		List<Game> gameList = getGameList();
-		
 		String gamesByUniquePersonVotesSql = "select g.*, count(distinct v.PersonKey) as UniqueVotes " +
 				"from Vote v join Game g " +
 				"on g.GameKey = v.GameKey " +
 				"group by v.GameKey order by count(distinct v.PersonKey) " +
 				"desc limit 5";
-		
-		PreparedStatement ps = conn.prepareStatement(gamesByUniquePersonVotesSql);
-		ResultSet rs = ps.executeQuery();
 
-		if(!rs.isBeforeFirst()) return null;
-		
-		while(rs.next())
+		return DBConnection.queryWithParameters(gamesByUniquePersonVotesSql,
+				new ArrayList<>(), GameDatabase::getGameWithUniqueVotesFromResultSet);
+	}
+
+	public static Game getGameFromResultSet(ResultSet rs)
+	{
+		try
 		{
-			Long gameKey = rs.getLong("GameKey");
-			for(Game game : gameList)
-			{
-				if(game.getGameKey() == gameKey)
-				{
-					game.setNumUniquePersonVotes(rs.getInt("UniqueVotes"));
-				}
-			}
+			Game game = _gson.fromJson(rs.getString("GameData"), Game.class);
+			game.setGameKey(rs.getLong("GameKey"));
+			return game;
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+			return null;
 		}
-		
-		Collections.sort(gameList);
-		
-		return gameList.subList(0, 5);
+	}
+
+	public static Game getGameWithUniqueVotesFromResultSet(ResultSet rs)
+	{
+		try
+		{
+			Game game = _gson.fromJson(rs.getString("GameData"), Game.class);
+			game.setGameKey(rs.getLong("GameKey"));
+			game.setNumUniquePersonVotes(rs.getInt("UniqueVotes"));
+			return game;
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+			return null;
+		}
 	}
 }

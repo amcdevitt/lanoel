@@ -3,8 +3,6 @@
  */
 package computer.lanoel.platform;
 
-import com.google.gson.Gson;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -46,7 +44,7 @@ public class ServiceUtils {
 		return System.getenv();
 	}
 
-	public static Connection getDBConnection() throws SQLException
+	public static Connection getSingleDBConnection() throws SQLException
 	{
 		Map<String, String> connInfo = ServiceUtils.getDatabaseProperties();
 		DriverManager.setLoginTimeout(5);

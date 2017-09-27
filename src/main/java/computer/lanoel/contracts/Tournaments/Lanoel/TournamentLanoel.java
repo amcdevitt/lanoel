@@ -4,15 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Tournaments.Tournament;
 
 public class TournamentLanoel extends Tournament
 {
-
-	private Long tournamentKey;
-	private String tournamentName;
 	private List<Round> roundList;
 	private List<Score> scores;
 	private Map<Integer, Integer> pointValues;
@@ -21,26 +17,6 @@ public class TournamentLanoel extends Tournament
 	{
 		scores = new ArrayList<Score>();
 		roundList = new ArrayList<Round>();
-	}
-	
-	public Long getTournamentKey()
-	{
-		return tournamentKey;
-	}
-	
-	public void setTournamentKey(Long tournamentKey)
-	{
-		this.tournamentKey = tournamentKey;
-	}
-	
-	public String getTournamentName()
-	{
-		return tournamentName;
-	}
-	
-	public void setTournamentName(String tournamentName)
-	{
-		this.tournamentName = tournamentName;
 	}
 
 	public List<Round> getRounds()
@@ -71,7 +47,7 @@ public class TournamentLanoel extends Tournament
 			
 			for(Place placeObj : round.getPlaces())
 			{
-				String personName = placeObj.getPerson();
+				String personName = placeObj.getParticipant().participantName;
 				
 				Score playerScore = new Score();
 				playerScore.personName = personName;

@@ -9,5 +9,6 @@ public class TournamentParticipant {
 
     public Long tournamentParticipantKey;
     public String participantName;
+    public String participantDescription;
     public Person person;
 }

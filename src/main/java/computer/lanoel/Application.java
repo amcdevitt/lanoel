@@ -1,11 +1,12 @@
 package computer.lanoel;
 
 
-import com.google.common.io.Resources;
 import com.omegasixcloud.database.DatabaseUpgrader;
 import computer.lanoel.platform.ServiceUtils;
+import computer.lanoel.platform.database.DBConnection;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -13,8 +14,7 @@ import computer.lanoel.platform.InitialPersonInfo;
 import computer.lanoel.platform.ServiceConstants;
 import computer.lanoel.steam.SteamCache;
 
-import java.io.File;
-
+@SpringBootApplication
 @ComponentScan
 @EnableAutoConfiguration
 @EnableScheduling
@@ -24,7 +24,7 @@ public static void main(String[] args) {
 		
 		try
 		{
-			DatabaseUpgrader.upgradeDatabase(ServiceConstants.sqlUpgradePaths, ServiceUtils.getDBConnection());
+			DatabaseUpgrader.upgradeDatabase(ServiceConstants.sqlUpgradePaths, ServiceUtils.getSingleDBConnection());
 
 		} catch (Exception ex){
 			System.out.println("Error creating Database");

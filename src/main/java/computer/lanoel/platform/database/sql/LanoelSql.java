@@ -21,7 +21,7 @@ public class LanoelSql {
 			+ "INSERT INTO Vote (PersonKey, GameKey, VoteNumber) VALUES (?,?,?);";
 	
 	public static final String INSERT_SUGGESTION = ""
-			+ "INSERT INTO Suggestion (SuggestionKey, SuggestionData) VALUES (?,?,?);";
+			+ "INSERT INTO Suggestion (SuggestionKey, SuggestionData) VALUES (?,?);";
 	
 	public static final String UPDATE_SUGGESTION = ""
 			+ "UPDATE Suggestion SET SuggestionData=? WHERE SuggestionKey=?;";

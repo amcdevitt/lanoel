@@ -1,5 +1,7 @@
 package computer.lanoel.platform.database;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import computer.lanoel.contracts.Tournaments.Swiss.SwissPlayerRound;
 import computer.lanoel.contracts.Tournaments.Swiss.SwissRoundResult;
 import computer.lanoel.contracts.Tournaments.Swiss.TournamentSwiss;
@@ -9,147 +11,60 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * Created by amcde on 3/30/2017.
  */
-public class TournamentSwissDatabase extends TournamentDatabase implements IDatabase {
+public class TournamentSwissDatabase extends TournamentDatabase {
 
-    public TournamentSwissDatabase(Connection conn) {
-        super(conn);
+    private static Gson _gson;
+    public TournamentSwissDatabase() {
+        _gson = new GsonBuilder().setExclusionStrategies(new DatabaseJsonExclusions()).create();
     }
 
     public TournamentSwiss createTournament(TournamentSwiss tournamentSwiss) throws SQLException
     {
         tournamentSwiss.type = "SWISS";
-        tournamentSwiss.tournamentKey = super.createTournament((Tournament)tournamentSwiss).tournamentKey;
-
-        String sql = "INSERT INTO TournamentSwiss " +
-                "(TournamentKey, NumberOfRounds, PointsPerGameWon, PointsPerRoundWon, " +
-                "PointsForDraw, PlayersCanPlaySamePlayerMoreThanOnce) " +
-                "VALUES (?,?,?,?,?,?)";
-        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-        int i = 1;
-        ps.setLong(i++, tournamentSwiss.tournamentKey);
-        ps.setInt(i++, tournamentSwiss.numberOfRounds);
-        ps.setInt(i++, tournamentSwiss.pointsPerGameWon);
-        ps.setInt(i++, tournamentSwiss.pointsPerRoundWon);
-        ps.setInt(i++, tournamentSwiss.pointsPerDraw);
-        ps.setBoolean(i++, tournamentSwiss.canPlaySamePlayerMoreThanOnce);
-
-        ps.execute();
-
-        try(ResultSet keys = ps.getGeneratedKeys())
-        {
-            if(keys.next())
-            {
-                tournamentSwiss.tournamentSwissKey = keys.getLong(1);
-            }
-        }
-
+        tournamentSwiss.tournamentKey = super.createTournament(tournamentSwiss, "SWISS").tournamentKey;
         return tournamentSwiss;
     }
 
     public TournamentSwiss updateTournament(TournamentSwiss tournamentSwiss) throws SQLException
     {
         String sql = "UPDATE TournamentSwiss SET " +
-                "NumberOfRounds = ?, " +
-                "PointsPerGameWon = ?, " +
-                "PointsPerRoundWon = ?, " +
-                "PointsForDraw = ?, " +
-                "PlayersCanPlaySamePlayerMoreThanOnce = ? " +
+                "TournamentData = ?, " +
                 "WHERE TournamentSwissKey = ?;";
-        PreparedStatement ps = conn.prepareStatement(sql);
-        int i = 1;
-        ps.setInt(i++, tournamentSwiss.numberOfRounds);
-        ps.setInt(i++, tournamentSwiss.pointsPerGameWon);
-        ps.setInt(i++, tournamentSwiss.pointsPerRoundWon);
-        ps.setInt(i++, tournamentSwiss.pointsPerDraw);
-        ps.setBoolean(i++, tournamentSwiss.canPlaySamePlayerMoreThanOnce);
-        ps.executeUpdate();
+        QueryParameter qp1 = new QueryParameter(_gson.toJson(tournamentSwiss), Types.OTHER);
+        QueryParameter qp2 = new QueryParameter(tournamentSwiss.tournamentSwissKey, Types.BIGINT);
+        DBConnection.executeWithParams(sql, Arrays.asList(qp1, qp2));
         return tournamentSwiss;
     }
 
-    public TournamentSwiss getTournament(long tournamentKey)
+    public TournamentSwiss getTournament(long tournamentKey) throws SQLException
     {
         String sql = "SELECT * FROM Tournament t " +
                 "JOIN TournamentSwiss ts " +
                 "ON t.TournamentKey = ts.TournamentKey " +
                 "WHERE t.TournamentKey = ?;";
-        TournamentSwiss ts = null;
-        try(PreparedStatement ps = conn.prepareStatement(sql))
-        {
-            ps.setLong(1, tournamentKey);
-            ResultSet rs = ps.executeQuery();
 
-            if(!rs.isBeforeFirst())
-            {
-                return ts;
-            }
+        QueryParameter qp = new QueryParameter(tournamentKey, Types.BIGINT);
+        List<TournamentSwiss> tsList = DBConnection.queryWithParameters(sql, Arrays.asList(qp), TournamentSwissDatabase::getTournamentSwissFromResultSet);
+        TournamentSwiss ts = tsList.stream().findFirst().get();
 
-            while(rs.next())
-            {
-                ts = new TournamentSwiss();
-                ts.tournamentKey = rs.getLong("TournamentKey");
-                ts.tournamentName = rs.getString("TournamentName");
-                ts.type = rs.getString("Type");
-                ts.setCreatedFromSql(rs.getDate("Created"));
-                ts.tournamentSwissKey = rs.getLong("TournamentSwissKey");
-                ts.numberOfRounds = rs.getInt("NumberOfRounds");
-                ts.pointsPerGameWon = rs.getInt("PointsPerGameWon");
-                ts.pointsPerRoundWon = rs.getInt("PointsPerRoundWon");
-                ts.pointsPerDraw = rs.getInt("PointsForDraw");
-                ts.canPlaySamePlayerMoreThanOnce = rs.getBoolean("PlayersCanPlaySamePlayerMoreThanOnce");
-            }
+        ts.rounds = getSwissRoundList(ts.tournamentKey);
+        ts.participants = super.getTournamentParticipantList(ts.tournamentKey);
 
-            ts.rounds = getSwissRoundList(ts.tournamentKey);
-            ts.participants = super.getTournamentParticipantList(ts.tournamentKey);
-            return ts;
-
-        } catch (SQLException e)
-        {
-            return ts;
-        }
+        return ts;
     }
 
-    public Set<SwissPlayerRound> getSwissRoundList(Long tournamentKey)
+    public List<SwissPlayerRound> getSwissRoundList(Long tournamentKey) throws SQLException
     {
         String sql = "SELECT * FROM TournamentSwiss_Round WHERE TournamentKey = ?;";
         Set<SwissPlayerRound> sprList = new HashSet<>();
 
-        try(PreparedStatement ps = conn.prepareStatement(sql))
-        {
-            ps.setLong(1, tournamentKey);
-            ResultSet rs = ps.executeQuery();
-
-            if(!rs.isBeforeFirst())
-            {
-                return sprList;
-            }
-
-            while(rs.next())
-            {
-                SwissPlayerRound spr = new SwissPlayerRound();
-                spr.roundNumber = rs.getInt("RoundNumber");
-                spr.playerKey = rs.getLong("PlayerKey");
-                spr.gamesWon = rs.getInt("GamesWon");
-                spr.draws = rs.getInt("Draws");
-                spr.drop = rs.getBoolean("PlayerDrop");
-                spr.roundWon = rs.getBoolean("roundWon");
-                sprList.add(spr);
-            }
-
-            return sprList;
-        } catch (SQLException e)
-        {
-            System.out.println("Exception in getSwissRoundList: " + e.getMessage());
-            return sprList;
-        }
+        QueryParameter qp = new QueryParameter(tournamentKey, Types.BIGINT);
+        return DBConnection.queryWithParameters(sql, Arrays.asList(qp), TournamentSwissDatabase::getSwissRoundFromResultSet);
     }
 
     public void insertRoundResult(Long tournamentKey, SwissRoundResult result) throws SQLException
@@ -158,46 +73,27 @@ public class TournamentSwissDatabase extends TournamentDatabase implements IData
         removeRoundResult(result.playerTwoKey, result.roundNumber);
 
         String sql = "INSERT INTO TournamentSwiss_Round " +
-                "(TournamentKey, RoundNumber, PlayerKey, GamesWon, Draws, PlayerDrop, RoundWon) " +
-                "VALUES (?,?,?,?,?,?,?);";
-        PreparedStatement ps = conn.prepareStatement(sql);
+                "(TournamentKey, RoundData) " +
+                "VALUES (?,?);";
+        QueryBatch qb = new QueryBatch();
+        QueryParameter keyParam = new QueryParameter(tournamentKey, Types.BIGINT);
 
-        int i = 1;
-        ps.setLong(i++, tournamentKey);
-        ps.setInt(i++, result.roundNumber);
-        ps.setLong(i++, result.playerOneKey);
-        ps.setInt(i++, result.gamesWonPlayerOne);
-        ps.setInt(i++, result.draws);
-        ps.setBoolean(i++, result.playerOneDrop);
-        ps.setBoolean(i++, result.gamesWonPlayerOne > result.gamesWonPlayerTwo);
-        ps.addBatch();
+        for(SwissPlayerRound round : result.getRoundList())
+        {
+            QueryParameter qp1 = new QueryParameter(_gson.toJson(round), Types.OTHER);
+            qb.addBatch(Arrays.asList(keyParam, qp1));
+        }
 
-        i = 1;
-        ps.setLong(i++, tournamentKey);
-        ps.setInt(i++, result.roundNumber);
-        ps.setLong(i++, result.playerTwoKey);
-        ps.setInt(i++, result.gamesWonPlayerTwo);
-        ps.setInt(i++, result.draws);
-        ps.setBoolean(i++, result.playerTwoDrop);
-        ps.setBoolean(i++, result.gamesWonPlayerTwo > result.gamesWonPlayerOne);
-        ps.addBatch();
-
-        ps.executeBatch();
+        DBConnection.executeBatch(sql, qb);
     }
 
-    private void removeRoundResult(Long playerKey, int roundNumber)
+    private void removeRoundResult(Long playerKey, int roundNumber) throws SQLException
     {
         String sql = "DELETE FROM TournamentSwiss_Round WHERE PlayerKey = ? AND RoundNumber = ?;";
-        try(PreparedStatement ps = conn.prepareStatement(sql))
-        {
-            ps.setLong(1, playerKey);
-            ps.setInt(2, roundNumber);
-            ps.execute();
-            conn.commit();
-        } catch (SQLException e)
-        {
 
-        }
+        QueryParameter qp1 = new QueryParameter(playerKey, Types.BIGINT);
+        QueryParameter qp2 = new QueryParameter(roundNumber, Types.BIGINT);
+        DBConnection.executeWithParams(sql, Arrays.asList(qp1, qp2));
     }
 
     public TournamentParticipant addParticipant(Long tournamentKey, TournamentParticipant part) throws SQLException
@@ -205,44 +101,27 @@ public class TournamentSwissDatabase extends TournamentDatabase implements IData
         return super.addParticipant(tournamentKey, part);
     }
 
-    public void removeParticipantFromTournament(TournamentParticipant part) throws SQLException
+    public void removeParticipantFromTournament(Long part) throws SQLException
     {
-        super.RemoveParticipantFromTournament(part);
-    }
-
-    public TournamentSwiss updateTournamentName(Tournament tournament) throws SQLException
-    {
-        super.updateTournament(tournament);
-        return getTournament(tournament.tournamentKey);
+        super.removeParticipantFromTournament(part);
     }
 
     public List<Tournament> getTournamentList()
     {
-        return super.getTournamentList().stream().filter(t -> t.type.equalsIgnoreCase("swiss")).collect(Collectors.toList());
+        try
+        {
+            return super.getTournamentListByType("SWISS", TournamentSwissDatabase::getTournamentSwissFromResultSet);
+        } catch (Exception e)
+        {
+            return new ArrayList<>();
+        }
     }
 
     public List<Pair<Long, Long>> getCurrentRoundPairings(Long tournamentKey) throws SQLException
     {
         String sql = "SELECT * FROM TournamentSwiss_CurrentRoundPairing WHERE TournamentKey = ?";
-        PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setLong(1, tournamentKey);
-        ResultSet rs = ps.executeQuery();
-
-        List<Pair<Long, Long>> pairings = new ArrayList<>();
-
-        if(!rs.isBeforeFirst())
-        {
-            return new ArrayList<>();
-        }
-
-        while(rs.next())
-        {
-            Long playerOne, playerTwo;
-            playerOne = rs.getLong("PlayerOneKey");
-            playerTwo = rs.getLong("PlayerTwoKey");
-            pairings.add(new ImmutablePair<>(playerOne, playerTwo));
-        }
-        return pairings;
+        QueryParameter qp = new QueryParameter(tournamentKey, Types.BIGINT);
+        return DBConnection.queryWithParameters(sql, Arrays.asList(qp), TournamentSwissDatabase::getRoundPairFromResultSet);
     }
 
     public void setCurrentRoundPairings(List<Pair<Long, Long>> pairings, Long tournamentKey) throws SQLException
@@ -250,28 +129,61 @@ public class TournamentSwissDatabase extends TournamentDatabase implements IData
         String sql = "INSERT INTO TournamentSwiss_CurrentRoundPairing " +
                 "(TournamentKey, PlayerOneKey, PlayerTwoKey) " +
                 "VALUES (?,?,?);";
-        PreparedStatement ps = conn.prepareStatement(sql);
-
+        QueryParameter keyParam = new QueryParameter(tournamentKey, Types.BIGINT);
+        QueryBatch qb = new QueryBatch();
         for(Pair<Long, Long> pair : pairings)
         {
-            Long rightPlayer = pair.getRight();
-            ps.setLong(1, tournamentKey);
-            ps.setLong(2, pair.getLeft());
-            if(rightPlayer == null)
-            {
-                ps.setNull(3, Types.BIGINT);
-            } else {
-                ps.setLong(3, rightPlayer);
-            }
-            ps.addBatch();
+            QueryParameter qp1 = new QueryParameter(pair.getLeft(), Types.BIGINT);
+            QueryParameter qp2 = new QueryParameter(pair.getRight(), Types.BIGINT);
+            qb.addBatch(Arrays.asList(keyParam, qp1, qp2));
         }
-        ps.executeBatch();
+        DBConnection.executeBatch(sql, qb);
     }
 
     public void removeRoundPairings(Long tournamentKey) throws SQLException {
         String sql = "DELETE FROM TournamentSwiss_CurrentRoundPairing WHERE TournamentKey = ?;";
-        PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setLong(1, tournamentKey);
-        ps.execute();
+        QueryParameter qp = new QueryParameter(tournamentKey, Types.BIGINT);
+        DBConnection.executeWithParams(sql, Arrays.asList(qp));
+    }
+
+    public static TournamentSwiss getTournamentSwissFromResultSet(ResultSet rs)
+    {
+        try
+        {
+            TournamentSwiss ts = _gson.fromJson(rs.getString("TournamentData"), TournamentSwiss.class);
+            ts.tournamentKey = rs.getLong("TournamentKey");
+            return ts;
+        } catch (SQLException e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static SwissPlayerRound getSwissRoundFromResultSet(ResultSet rs)
+    {
+        try
+        {
+            return _gson.fromJson(rs.getString("RoundData"), SwissPlayerRound.class);
+        } catch (SQLException e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static Pair<Long, Long> getRoundPairFromResultSet(ResultSet rs)
+    {
+        try
+        {
+            Long playerOne, playerTwo;
+            playerOne = rs.getLong("PlayerOneKey");
+            playerTwo = rs.getLong("PlayerTwoKey");
+            return new ImmutablePair<>(playerOne, playerTwo);
+        } catch (SQLException e)
+        {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

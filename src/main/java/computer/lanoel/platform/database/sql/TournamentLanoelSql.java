@@ -69,7 +69,7 @@ public class TournamentLanoelSql
 		
 		insertSql.append("RoundKey,");
 		valuesSql.append("?,");
-		insertSql.append("PersonKey,");
+		insertSql.append("ParticipantKey,");
 		valuesSql.append("?,");
 		insertSql.append("Place");
 		valuesSql.append("?");
@@ -86,7 +86,7 @@ public class TournamentLanoelSql
 		
 		updateSql.append("Place=?");
 		
-		whereSql.append(" WHERE RoundKey=? AND PersonKey=?;");
+		whereSql.append(" WHERE RoundKey=? AND ParticipantKey=?;");
 		return updateSql.append(whereSql).toString();
 	}
 }

@@ -9,9 +9,9 @@ GameKey BIGINT
 CREATE TABLE IF NOT EXISTS TournamentLanoel_RoundStanding
 (
 RoundKey BIGINT,
-PersonKey BIGINT,
+ParticipantKey BIGINT,
 Place INT,
-UNIQUE (RoundKey, PersonKey)
+UNIQUE (RoundKey, ParticipantKey)
 );
 
 CREATE TABLE IF NOT EXISTS TournamentLanoel_PointValues

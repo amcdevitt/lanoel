@@ -15,7 +15,6 @@ import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Vote;
 import computer.lanoel.platform.InitialPersonInfo;
-import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.GameDatabase;
 import computer.lanoel.platform.database.PersonDatabase;
 import computer.lanoel.platform.database.VoteDatabase;
@@ -36,6 +35,9 @@ public class SteamCache {
 	private Set<SteamGame> _fullSteamGameSet;
 	private Set<Vote> _votesCache;
 	private List<GameOwnership> _ownershipCache;
+	private VoteDatabase _voteDb = new VoteDatabase();
+	private PersonDatabase _personDb = new PersonDatabase();
+	private GameDatabase _gameDb = new GameDatabase();
 	
 	private SteamCache()
 	{
@@ -67,8 +69,7 @@ public class SteamCache {
 	
 	public void refreshVotesCache() throws Exception
 	{
-		VoteDatabase voteDb = (VoteDatabase)DatabaseFactory.getInstance().getDatabase("VOTE");
-		_votesCache = voteDb.getVotes();
+		_votesCache = new HashSet<>(_voteDb.getVotes());
 		populateVotes(_votesCache);
 	}
 	
@@ -151,8 +152,7 @@ public class SteamCache {
 	{
 		_personCache.clear();
 		_personCache = InitialPersonInfo.personSet();
-		PersonDatabase db = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
-		List<Person> personsFromDb = db.getPersonList();
+		List<Person> personsFromDb = _personDb.getPersonList();
 		SteamPlayerSummaryResponse response = 
 				SteamService.getPlayerInformationList(
 						_personCache.stream().map(p -> p.getSteamInfo().getSteamid())
@@ -183,8 +183,7 @@ public class SteamCache {
 	
 	private void refreshLanoelGameCache() throws Exception
 	{
-		GameDatabase db = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
-		List<Game> gameList = db.getGameList();
+		List<Game> gameList = _gameDb.getGameList();
 		for(Game game : gameList)
 		{
 			game.setSteamGame(_steamGameCache.get(game.getGameName()));

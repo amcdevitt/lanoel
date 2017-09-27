@@ -5,8 +5,6 @@ import computer.lanoel.contracts.Tournaments.Swiss.SwissRoundResult;
 import computer.lanoel.contracts.Tournaments.Swiss.TournamentSwiss;
 import computer.lanoel.contracts.Tournaments.Tournament;
 import computer.lanoel.contracts.Tournaments.TournamentParticipant;
-import computer.lanoel.platform.database.DatabaseFactory;
-import computer.lanoel.platform.database.IDatabase;
 import computer.lanoel.platform.database.TournamentSwissDatabase;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -19,12 +17,7 @@ import java.util.stream.Collectors;
  */
 public class TournamentSwissManager {
 
-    TournamentSwissDatabase db;
-
-    public TournamentSwissManager() throws Exception
-    {
-        db = (TournamentSwissDatabase) DatabaseFactory.getInstance().getDatabase("TOURNAMENT_SWISS");
-    }
+    private TournamentSwissDatabase _tournDb = new TournamentSwissDatabase();
 
     public TournamentSwiss createTournament() throws Exception
     {
@@ -35,78 +28,46 @@ public class TournamentSwissManager {
         tournament.pointsPerDraw = 1;
         tournament.pointsPerRoundWon = 0;
 
-        try
-        {
-            return db.createTournament(tournament);
-        } finally {
-            db.commitAndClose();
-        }
+        return _tournDb.createTournament(tournament);
     }
 
     public TournamentSwiss getTournamentDetails(Long tournamentKey) throws Exception
     {
-        try {
-            TournamentSwiss t = db.getTournament(tournamentKey);
-            // Set other details like calculated round - upcoming
-            t.score = getScoreUpdate(t);
-            t.setCurrentRoundPairings(getCurrentRoundPairings(t));
-            return t;
-        } finally {
-            db.commitAndClose();
-        }
+        TournamentSwiss t = _tournDb.getTournament(tournamentKey);
+        // Set other details like calculated round - upcoming
+        t.score = getScoreUpdate(t);
+        t.setCurrentRoundPairings(getCurrentRoundPairings(t));
+        return t;
     }
 
     public List<Tournament> getTournamentList() throws Exception
     {
-        try {
-            return db.getTournamentList();
-        } finally {
-            db.commitAndClose();
-        }
+        return _tournDb.getTournamentList();
     }
 
     public TournamentSwiss updateTournament(TournamentSwiss t) throws Exception
     {
-        try {
-            return db.updateTournament(t);
-        } finally {
-            db.commitAndClose();
-        }
+        return _tournDb.updateTournament(t);
     }
 
     public TournamentSwiss recordRoundResult(Long tournamentKey, SwissRoundResult result) throws Exception
     {
-        try {
-            db.insertRoundResult(tournamentKey, result);
-            return db.getTournament(tournamentKey);
-        } finally {
-            db.commitAndClose();
-        }
+        _tournDb.insertRoundResult(tournamentKey, result);
+        return _tournDb.getTournament(tournamentKey);
     }
 
     public TournamentSwiss addPlayer(String playerName, Long tournamentKey) throws Exception
     {
-        try {
-            TournamentParticipant tp = new TournamentParticipant();
-            tp.participantName = playerName;
-            db.addParticipant(tournamentKey, tp);
-            return db.getTournament(tournamentKey);
-        } finally {
-            db.commitAndClose();
-        }
+        TournamentParticipant tp = new TournamentParticipant();
+        tp.participantName = playerName;
+        _tournDb.addParticipant(tournamentKey, tp);
+        return _tournDb.getTournament(tournamentKey);
     }
 
     public TournamentSwiss removePlayer(Long pKey, Long tounamentKey) throws Exception
     {
-        try
-        {
-            TournamentParticipant p = new TournamentParticipant();
-            p.tournamentParticipantKey = pKey;
-            db.removeParticipantFromTournament(p);
-            return db.getTournament(tounamentKey);
-        } finally {
-            db.commitAndClose();
-        }
+        _tournDb.removeParticipantFromTournament(pKey);
+        return _tournDb.getTournament(tounamentKey);
     }
 
     private int getLatestRoundPlayed(TournamentSwiss t)
@@ -124,12 +85,12 @@ public class TournamentSwissManager {
         }
         else
         {
-            List<Pair<Long, Long>> pairings = db.getCurrentRoundPairings(t.tournamentKey);
+            List<Pair<Long, Long>> pairings = _tournDb.getCurrentRoundPairings(t.tournamentKey);
 
             if(pairings.size() <= 0)
             {
                 pairings = generatePairings(t);
-                db.setCurrentRoundPairings(pairings, t.tournamentKey);
+                _tournDb.setCurrentRoundPairings(pairings, t.tournamentKey);
             }
 
             return pairings;
@@ -138,14 +99,14 @@ public class TournamentSwissManager {
 
     public TournamentSwiss setRoundComplete(TournamentSwiss ts) throws Exception
     {
-        db.removeRoundPairings(ts.tournamentKey);
+        _tournDb.removeRoundPairings(ts.tournamentKey);
         if(getLatestRoundPlayed(ts) >= ts.numberOfRounds)
         {
             ts.setCurrentRoundPairings(new ArrayList<>());
             return ts;
         }
         List<Pair<Long, Long>> pairings = generatePairings(ts);
-        db.setCurrentRoundPairings(pairings, ts.tournamentKey);
+        _tournDb.setCurrentRoundPairings(pairings, ts.tournamentKey);
         ts.setCurrentRoundPairings(pairings);
         return ts;
     }

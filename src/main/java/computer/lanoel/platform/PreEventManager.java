@@ -1,7 +1,6 @@
 package computer.lanoel.platform;
 
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
@@ -9,10 +8,6 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import computer.lanoel.communication.HttpHelper;
 import computer.lanoel.communication.LANoelAuth;
 import computer.lanoel.communication.User;
 import computer.lanoel.communication.UserAccount;
@@ -22,7 +17,6 @@ import computer.lanoel.contracts.Suggestion;
 import computer.lanoel.contracts.Vote;
 import computer.lanoel.exceptions.BadRequestException;
 import computer.lanoel.exceptions.InvalidSessionException;
-import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.GameDatabase;
 import computer.lanoel.platform.database.PersonDatabase;
 import computer.lanoel.platform.database.VoteDatabase;
@@ -34,6 +28,9 @@ public class PreEventManager {
 
 	private UserAccount _user;
 	private Calendar _voteCutoffTime;
+	private VoteDatabase _voteDb = new VoteDatabase();
+	private GameDatabase _gameDb = new GameDatabase();
+	private PersonDatabase _personDb = new PersonDatabase();
 	
 	private static final String VOTE_CUTOFF_TIME = "2016-11-19T05:00"; // yyyy-MM-dd'T'HH:mm
 	
@@ -76,17 +73,15 @@ public class PreEventManager {
     	if(personKey == null) throw new BadRequestException("no person provided");
     	
     	vote.setPersonKey(personKey);
-    	
-    	VoteDatabase voteDb = (VoteDatabase)DatabaseFactory.getInstance().getDatabase("VOTE");
-    	GameDatabase gameDb = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
-    	PersonDatabase personDb = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
-    	
-    	if(gameDb.getGame(vote.getGameKey()) == null)
+
+
+
+    	if(_gameDb.getGame(vote.getGameKey()) == null)
     	{
     		throw new BadRequestException("Game does not exist");
     	}
     	
-    	if(personDb.getPerson(vote.getPersonKey()) == null)
+    	if(_personDb.getPerson(vote.getPersonKey()) == null)
     	{
     		throw new BadRequestException("Person does not exist");
     	}
@@ -102,10 +97,10 @@ public class PreEventManager {
     		throw new BadRequestException("Voting ended!");
     	}
     	
-    	List<Vote> votesForPerson = voteDb.getVotesForPerson(vote.getPersonKey());
+    	List<Vote> votesForPerson = _voteDb.getVotesForPerson(vote.getPersonKey());
     	if(votesForPerson == null || votesForPerson.isEmpty())
     	{
-    		voteDb.insertVote(vote);
+    		_voteDb.insertVote(vote);
     		SteamCache.instance().refreshVotesCache();
     		return;
     	}
@@ -116,12 +111,12 @@ public class PreEventManager {
     			if(vote.getVoteNumber() == recordedVote.getVoteNumber())
     			{
     				vote.setVoteKey(recordedVote.getVoteKey());
-    				voteDb.updateVote(vote);
+    				_voteDb.updateVote(vote);
     				SteamCache.instance().refreshVotesCache();
     				return;
     			}
     		}    		
-    		voteDb.insertVote(vote);
+    		_voteDb.insertVote(vote);
     	}
     	SteamCache.instance().refreshVotesCache();
 	}
@@ -147,7 +142,6 @@ public class PreEventManager {
 	
 	public Set<Game> manageGame(Game game) throws Exception
 	{
-		GameDatabase db = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
 		
 		Set<String> filteredGameNames = SteamCache.instance().getGames().stream()
 				.map(g -> gameNameFilter(g.getGameName())).collect(Collectors.toSet());
@@ -169,10 +163,10 @@ public class PreEventManager {
     	
     	if(game.getGameKey() == null)
     	{
-    		db.insertGame(game);
+    		_gameDb.insertGame(game);
     	} else
     	{
-    		db.updateGame(game);
+    		_gameDb.updateGame(game);
     	}
     	SteamCache.instance().refresh();
     	return SteamCache.instance().getGames();
@@ -203,8 +197,7 @@ public class PreEventManager {
 	
 	public List<Game> getTopFiveGames() throws Exception
 	{
-		GameDatabase db = (GameDatabase)DatabaseFactory.getInstance().getDatabase("GAME");
-		Set<Long> gameKeys = db.getTopFiveGames().stream().map(g -> g.getGameKey()).collect(Collectors.toSet());
+		Set<Long> gameKeys = _gameDb.getTopFiveGames().stream().map(g -> g.getGameKey()).collect(Collectors.toSet());
 		List<Game> gameList = SteamCache.instance().getGames().stream()
 			.filter(g -> gameKeys.contains(g.getGameKey())).collect(Collectors.toList());
 		Collections.sort(gameList);
@@ -229,20 +222,18 @@ public class PreEventManager {
 	
 	public List<Suggestion> getSuggestions() throws Exception
 	{
-		PersonDatabase personDb = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
-		return personDb.getSuggestions();
+		return _personDb.getSuggestions();
 	}
 	
 	public Suggestion manageSuggestion(Suggestion sug) throws Exception
 	{
-		PersonDatabase personDb = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
 		
 		if(sug.Key == null || sug.Key == "")
 		{
-			personDb.insertSuggestion(sug);
+			_personDb.insertSuggestion(sug);
 			return sug;
 		}
 		
-		return personDb.updateSuggestion(sug);		
+		return _personDb.updateSuggestion(sug);
 	}
 }

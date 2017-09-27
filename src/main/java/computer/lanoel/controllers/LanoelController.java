@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import computer.lanoel.contracts.Tournaments.Lanoel.TournamentLanoel;
+import computer.lanoel.contracts.Tournaments.TournamentParticipant;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,7 +22,6 @@ import computer.lanoel.communication.HttpHelper;
 import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Tournaments.Lanoel.Round;
 import computer.lanoel.platform.LanoelManager;
-import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.TournamentLanoelDatabase;
 
 @RestController
@@ -66,13 +66,11 @@ public class LanoelController {
     		method = RequestMethod.GET, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<TournamentLanoel> getTournament(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders, @PathVariable Long tournamentKey) 
-    				throws Exception
+    		@PathVariable Long tournamentKey,
+			HttpServletRequest request)	throws Exception
     {
-    	TournamentLanoelDatabase db = (TournamentLanoelDatabase)DatabaseFactory.getInstance().getDatabase("TOURNAMENT");
-    	TournamentLanoel tourn = db.getTournament(tournamentKey);
-    	tourn.populateScore();
-    	return new ResponseEntity<TournamentLanoel>(tourn, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+		LanoelManager tm = new LanoelManager(HttpHelper.getUserFromRequest(request));
+    	return new ResponseEntity<>(tm.getLanoelTournament(tournamentKey), HttpHelper.commonHttpHeaders(), HttpStatus.OK);
     }
     
     @RequestMapping(
@@ -80,7 +78,6 @@ public class LanoelController {
     		method = RequestMethod.POST, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Long> createTournament(
-    		@RequestHeader(required = false) HttpHeaders requestHeaders, 
     		@PathVariable String tournamentName, HttpServletRequest request) 
     				throws Exception
     { 
@@ -88,6 +85,35 @@ public class LanoelController {
     	Long tournamentId = tm.createTournament(tournamentName);
     	return new ResponseEntity<Long>(tournamentId, HttpHelper.commonHttpHeaders(tm.getSessionIdForUser()), HttpStatus.OK);
     }
+
+	@RequestMapping(
+			value = "/{tournamentKey}/addParticipants",
+			method = RequestMethod.POST,
+			produces = MediaType.APPLICATION_JSON_VALUE,
+			consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<TournamentLanoel> addParticipants(
+			@PathVariable Long tournamentKey,
+			@RequestBody List<TournamentParticipant> participantList,
+			HttpServletRequest request)
+			throws Exception
+	{
+		LanoelManager tm = new LanoelManager(HttpHelper.getUserFromRequest(request));
+		return new ResponseEntity<>(tm.manageParticipants(tournamentKey, participantList), HttpHelper.commonHttpHeaders(tm.getSessionIdForUser()), HttpStatus.OK);
+	}
+
+	@RequestMapping(
+			value = "/{tournamentKey}/{participantKey}",
+			method = RequestMethod.DELETE)
+	public ResponseEntity<TournamentLanoel> removeParticipant(
+			@PathVariable Long tournamentKey,
+			@PathVariable Long participantKey,
+			HttpServletRequest request)
+			throws Exception
+	{
+		LanoelManager tm = new LanoelManager(HttpHelper.getUserFromRequest(request));
+		return new ResponseEntity<>(tm.removeParticipant(tournamentKey, participantKey),
+				HttpHelper.commonHttpHeaders(tm.getSessionIdForUser()), HttpStatus.OK);
+	}
     
     @RequestMapping(
     		value = "/{tournamentKey}/round",

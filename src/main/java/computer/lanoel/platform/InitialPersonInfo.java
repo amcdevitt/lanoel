@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import computer.lanoel.contracts.Person;
-import computer.lanoel.platform.database.DatabaseFactory;
 import computer.lanoel.platform.database.PersonDatabase;
 import computer.lanoel.steam.contracts.PlayerSteamInformation;
 
@@ -35,7 +34,7 @@ public class InitialPersonInfo {
 	
 	public static void initializePlayerDb() throws Exception
 	{
-		PersonDatabase db = (PersonDatabase)DatabaseFactory.getInstance().getDatabase("PERSON");
+		PersonDatabase db = new PersonDatabase();
 		List<Person> personList = db.getPersonList();
 		Set<String> personListUserNames = personList.stream().map(p -> p.getUserName()).collect(Collectors.toSet());
 		

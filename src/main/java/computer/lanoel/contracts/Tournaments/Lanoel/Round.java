@@ -15,6 +15,7 @@ public class Round implements Comparable<Round>
 	@JsonUnwrapped
 	private List<Place> places;
 	private Game game;
+	public Long gameKey;
 	
 	public Round()
 	{

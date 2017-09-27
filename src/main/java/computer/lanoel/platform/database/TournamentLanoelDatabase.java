@@ -1,51 +1,52 @@
 package computer.lanoel.platform.database;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.sql.*;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import com.mysql.jdbc.Statement;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Tournaments.Lanoel.Round;
 import computer.lanoel.contracts.Tournaments.Lanoel.TournamentLanoel;
+
+import computer.lanoel.contracts.Tournaments.Tournament;
+import computer.lanoel.contracts.Tournaments.TournamentParticipant;
 import computer.lanoel.platform.database.sql.TournamentLanoelSql;
 
-public class TournamentLanoelDatabase extends TournamentDatabase implements IDatabase {
+public class TournamentLanoelDatabase extends TournamentDatabase {
 
-	public TournamentLanoelDatabase(Connection connection) {
-		super(connection);
+	private static Gson _gson;
+	public TournamentLanoelDatabase() {
+		_gson = new GsonBuilder().setExclusionStrategies(new DatabaseJsonExclusions()).create();
 	}
 
 	public Long insertTournament(TournamentLanoel tourn) throws Exception
 	{
-		try
-		{
-			return super.createTournament(tourn).tournamentKey;
-		} finally
-		{
-			conn.commit();
-		}
+		return super.createTournament(tourn, "LANOEL").tournamentKey;
 	}
-	
+
+	public TournamentParticipant addParticipant(Long tournamentKey, TournamentParticipant part) throws SQLException
+	{
+		return super.addParticipant(tournamentKey, part);
+	}
+
+	public TournamentParticipant updateParticipant(TournamentParticipant part) throws SQLException
+	{
+		return super.updateParticipant(part);
+	}
+
+	public void removeParticipant(Long participantKey) throws SQLException
+	{
+		super.removeParticipantFromTournament(participantKey);
+	}
+
 	public void updateTournament(TournamentLanoel tourn) throws Exception
 	{
-		try
-		{
-			super.updateTournament(tourn);
-		} finally
-		{
-			conn.commit();
-		}
+		super.updateTournament(tourn);
 	}
 	
 	public Long insertRound(Long tournamentKey, Round round) throws Exception
@@ -54,103 +55,53 @@ public class TournamentLanoelDatabase extends TournamentDatabase implements IDat
 		{
 			throw new Exception("Must set a game!!!");
 		}
-		
-		PreparedStatement ps = conn.prepareStatement(TournamentLanoelSql.roundInsertSql(), Statement.RETURN_GENERATED_KEYS);
-		
-		int i = 1;
-		ps.setLong(i++, tournamentKey);
-		ps.setInt(i++, round.getRoundNumber());
-		ps.setLong(i++, round.getGame().getGameKey());
-		ps.executeUpdate();
-		
-		
-		try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-            if (generatedKeys.next()) {
-                round.setRoundKey(generatedKeys.getLong(1));
-            }
-            else {
-                throw new SQLException("Item price insert failed, no ID obtained.");
-            }
-        }
-		
-		conn.commit();
-		conn.close();
-		return round.getRoundKey();
+
+		QueryParameter qp1 = new QueryParameter(tournamentKey, Types.BIGINT);
+		QueryParameter qp2 = new QueryParameter(round.getRoundNumber(), Types.INTEGER);
+		QueryParameter qp3 = new QueryParameter(round.getGame().getGameKey(), Types.BIGINT);
+
+		return DBConnection.executeUpdateReturnGeneratedKey(TournamentLanoelSql.roundInsertSql(), Arrays.asList(qp1, qp2, qp3));
 	}
 	
 	public void updateRound(Long tournamentKey, Round round) throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement(TournamentLanoelSql.roundUpdateSql());
-		
-		int i = 1;
-		ps.setLong(i++, round.getGame().getGameKey());
-		ps.setLong(i++, tournamentKey);
-		ps.setLong(i++, round.getRoundNumber());
-		ps.executeUpdate();
-		
-		conn.commit();
-		conn.close();
+		QueryParameter qp1 = new QueryParameter(round.getGame().getGameKey(), Types.BIGINT);
+		QueryParameter qp2 = new QueryParameter(tournamentKey, Types.BIGINT);
+		QueryParameter qp3 = new QueryParameter(round.getRoundNumber(), Types.INTEGER);
+
+		DBConnection.executeWithParams(TournamentLanoelSql.roundUpdateSql(), Arrays.asList(qp1, qp2, qp3));
 	}
 	
-	public void insertRoundStanding(Long personKey, Long roundKey, int place) throws Exception
-	{		
-		try
-		{
-			PreparedStatement deletePs = conn.prepareStatement("DELETE FROM TournamentLanoel_RoundStanding WHERE RoundKey=? AND PersonKey=?");
-			deletePs.setLong(1, roundKey);
-			deletePs.setLong(2, personKey);
-			deletePs.execute();
-		} catch (Exception e)
-		{
-			// Do nothing!
-		}
-		
-		
-		PreparedStatement ps = conn.prepareStatement(TournamentLanoelSql.roundStandingInsertSql());
-		
-		int i = 1;
-		ps.setLong(i++, roundKey);
-		ps.setLong(i++, personKey);
-		ps.setInt(i++, place);
-		ps.executeUpdate();
+	public void insertRoundStanding(Long participantKey, Long roundKey, int place) throws Exception
+	{
+		String deleteSql = "DELETE FROM TournamentLanoel_RoundStanding WHERE RoundKey=? AND ParticipantKey=?";
+		QueryParameter qp1 = new QueryParameter(roundKey, Types.BIGINT);
+		QueryParameter qp2 = new QueryParameter(participantKey, Types.BIGINT);
+		DBConnection.executeWithParams(deleteSql, Arrays.asList(qp1, qp2));
 
-		conn.commit();
+		QueryParameter qp3 = new QueryParameter(place, Types.INTEGER);
+		DBConnection.executeUpdateWithParams(TournamentLanoelSql.roundStandingInsertSql(), Arrays.asList(qp1, qp2, qp3));
 	}
 	
 	public void replaceRoundStandings(Long roundKey, List<Place> places) throws Exception
 	{
 		resetRoundStandings(roundKey);
-		
-		PersonDatabase personDb = (PersonDatabase) DatabaseFactory.getInstance().getDatabase("PERSON", conn);
-		
-		for(Place place : places)
-		{
-			PreparedStatement ps = conn.prepareStatement(TournamentLanoelSql.roundStandingUpdateSql());
-			
-			int i = 1;
-			ps.setInt(i++, place.getPlace());
-			ps.setLong(i++, roundKey);
-			ps.setLong(i++, personDb.getPersonKey(place.getPerson()));
-			ps.executeUpdate();
+
+		for(Place place : places) {
+			QueryParameter qp1 = new QueryParameter(roundKey, Types.BIGINT);
+			QueryParameter qp2 = new QueryParameter(place.getParticipant().tournamentParticipantKey, Types.BIGINT);
+			QueryParameter qp3 = new QueryParameter(place.getPlace(), Types.INTEGER);
+			DBConnection.executeUpdateWithParams(TournamentLanoelSql.roundStandingInsertSql(), Arrays.asList(qp1, qp2, qp3));
 		}
-		
-		conn.commit();
 	}
 	
 	public void resetRoundStandings(Long roundKey) throws Exception
 	{
-		try
-		{
-			PreparedStatement deletePs = conn.prepareStatement("DELETE FROM TournamentLanoel_RoundStanding WHERE RoundKey=?");
-			deletePs.setLong(1, roundKey);
-			deletePs.execute();
-			conn.commit();
-		} catch (Exception e)
-		{
-			// Do nothing!
-		}
-		
-		PersonDatabase personDb = (PersonDatabase) DatabaseFactory.getInstance().getDatabase("PERSON", conn);
+		String deleteSql = "DELETE FROM TournamentLanoel_RoundStanding WHERE RoundKey=?";
+		QueryParameter qp = new QueryParameter(roundKey, Types.BIGINT);
+		DBConnection.executeWithParams(deleteSql, Arrays.asList(qp));
+
+		PersonDatabase personDb = new PersonDatabase();
 		
 		//Get all person's and put them in the round at 99th place
 		List<Person> personList = personDb.getPersonList();
@@ -159,224 +110,144 @@ public class TournamentLanoelDatabase extends TournamentDatabase implements IDat
 			insertRoundStanding(person.getPersonKey(), roundKey, 99);
 		}
 	}
-	
-	public TournamentLanoel getTournament(Long tournamentKey) throws Exception
+
+	public TournamentLanoel getTournament(Long tournamentKey) throws SQLException
 	{
-		PreparedStatement tournamentPs = conn.prepareStatement("SELECT * FROM TournamentLanoel_Tournament WHERE TournamentKey = ?;");
-		PreparedStatement roundPs = conn.prepareStatement("SELECT * FROM TournamentLanoel_Round WHERE TournamentKey = ?;");
-		PreparedStatement roundStandingPs = conn.prepareStatement("SELECT * FROM TournamentLanoel_RoundStanding;");
-		PreparedStatement gamePs = conn.prepareStatement("SELECT * FROM Game;");
-		PreparedStatement personPs = conn.prepareStatement("SELECT * FROM Person;");
-		
-		tournamentPs.setLong(1, tournamentKey);
-		roundPs.setLong(1, tournamentKey);
-		
-		ResultSet tournamentRs = tournamentPs.executeQuery();
-		ResultSet roundRs = roundPs.executeQuery();
-		ResultSet roundStandingRs = roundStandingPs.executeQuery();
-		ResultSet gameRs = gamePs.executeQuery();
-		ResultSet personRs = personPs.executeQuery();
-		
-		// TournamentLanoel
-		if(!tournamentRs.isBeforeFirst()) return null;
-		
-		TournamentLanoel tourn = new TournamentLanoel();
-		
-		while(tournamentRs.next())
-		{
-			tourn.setTournamentName(tournamentRs.getString("TournamentName"));
-			tourn.setTournamentKey(tournamentRs.getLong("TournamentKey"));
-			//tourn.setRounds(getRounds(tournamentKey));
-		}
-		
-		//Person
-		if(!personRs.isBeforeFirst()) return null; //No results
-		
-		List<Person> personList = new ArrayList<Person>();
-		while(personRs.next())
-		{
-			Person personToAdd = new Person();
-			personToAdd.setPersonKey(personRs.getLong("PersonKey"));
-			personToAdd.setPersonName(personRs.getString("PersonName"));
-			personToAdd.setTitle(personRs.getString("Title"));
-			personToAdd.setInformation(personRs.getString("Information"));
-			personList.add(personToAdd);
-		}
-		
-		//Standings
-		List<Place> standingList = new ArrayList<Place>();
-		Map<Integer, Integer> pointValues = getPointValues();
-		
-		while(roundStandingRs.next())
-		{
-			Place currentPlace = new Place();
-			Long personKey = roundStandingRs.getLong("PersonKey");
-			Long roundKey = roundStandingRs.getLong("RoundKey");
-			Person currentPerson = personList.stream().filter(p -> p.getPersonKey() == personKey).collect(Collectors.toList()).get(0);
-			if(currentPerson == null) continue;
-			int place = roundStandingRs.getInt("Place");
-			String scoreName = (String) (currentPerson.getTitle() == null ? " " : currentPerson.getTitle());
-			scoreName += ' ' + currentPerson.getPersonName();
-			
-			currentPlace.setPerson(scoreName.trim());
-			currentPlace.setRoundKey(roundKey);
-			
-			int pointValue = 0;
-			
-			try
-			{
-				pointValue = pointValues.get(place);
-			} catch (Exception e)
-			{
-				// Do nothing
-			}
-			
-			currentPlace.setPlace(place, pointValue);
-			
-			standingList.add(currentPlace);
-		}
-		
-		//Games
-		if(!gameRs.isBeforeFirst()) return null;
-		
-		List<Game> gameList = new ArrayList<Game>();
-		while(gameRs.next())
-		{
-			Game game = new Game();
-			game.setGameKey(gameRs.getLong("GameKey"));
-			game.setGameName(gameRs.getString("GameName"));
-			game.setLocation(gameRs.getString("Location"));
-			game.setRules(gameRs.getString("Rules"));
-			gameList.add(game);
-		}
-		
-		//Rounds
-		List<Round> roundList = new ArrayList<Round>();
-		
-		while(roundRs.next())
-		{
-			Round currentRound = new Round();
-			Long gameKey = roundRs.getLong("GameKey");
-			currentRound.setRoundNumber(roundRs.getInt("RoundNumber"));
-			currentRound.setRoundKey(roundRs.getLong("RoundKey"));
-			Game tempGame = new Game();
-			tempGame.setGameKey(gameKey);
-			currentRound.setGame(gameList.get(gameList.indexOf(tempGame)));
-			
-			List<Place> placeList = new ArrayList<Place>();
-			for(Place place : standingList)
-			{
-				if(place.getRoundKey() == currentRound.getRoundKey())
-				{
-					placeList.add(place);
-				}
-			}
-			
-			currentRound.setPlaces(placeList);
-			roundList.add(currentRound);
-		}
-		
+		TournamentDatabase tdb = new TournamentDatabase();
+		List<Round> roundList = getRounds(tournamentKey);
+
+		TournamentLanoel tourn = (TournamentLanoel)tdb.getTournamentList(TournamentLanoelDatabase::getTournamentFromResultSet).stream()
+				.filter(t -> t.tournamentKey.equals(tournamentKey)).findFirst().get();
+
 		tourn.setRounds(roundList);
 		
 		return tourn;
 	}
 	
-	public List<Round> getRounds(Long tournamentKey) throws Exception
+	public List<Round> getRounds(Long tournamentKey) throws SQLException
 	{
-		GameDatabase gameDb = (GameDatabase) DatabaseFactory.getInstance().getDatabase("GAME", conn);
-		
-		PreparedStatement ps = conn.prepareStatement("SELECT * FROM TournamentLanoel_Round WHERE TournamentKey = ?;");
-		
-		ps.setLong(1, tournamentKey);
-		
-		ResultSet rs = ps.executeQuery();
-		
-		if(!rs.isBeforeFirst()) return new ArrayList<Round>();
-		
-		List<Round> roundList = new ArrayList<Round>();
-		
-		while(rs.next())
+		String roundSql = "SELECT r.*, g.GameData " +
+				"FROM TournamentLanoel_Round r " +
+				"join Game g on g.GameKey = r.GameKey " +
+				"WHERE TournamentKey = ?";
+		String roundStandingSql = "select rs.*, p.TournamentParticipantData " +
+				"from TournamentLanoel_RoundStanding rs " +
+				"join TournamentLanoel_Round r on r.RoundKey = rs.RoundKey " +
+				"join TournamentParticipant p on p.TournamentParticipantKey = rs.ParticipantKey " +
+				"where r.TournamentKey = ?";
+		GameDatabase gameDb = new GameDatabase();
+		List<Game> gameList = gameDb.getGameList();
+
+		QueryParameter qp = new QueryParameter(tournamentKey, Types.BIGINT);
+		List<Round> roundList = DBConnection.queryWithParameters(roundSql,
+				Arrays.asList(qp), TournamentLanoelDatabase::getRoundFromResultSet);
+		List<Place> roundStandingList = DBConnection.queryWithParameters(roundStandingSql,
+				Arrays.asList(qp), TournamentLanoelDatabase::getRoundStandingFromResultSet);
+
+		for(Round round : roundList)
 		{
-			Round currentRound = new Round();
-			Long gameKey = rs.getLong("GameKey");
-			currentRound.setRoundNumber(rs.getInt("RoundNumber"));
-			currentRound.setRoundKey(rs.getLong("RoundKey"));
-			currentRound.setGame(gameDb.getGame(gameKey));
-			currentRound.setPlaces(getRoundStandings(currentRound.getRoundKey()));
-			roundList.add(currentRound);
+			round.setPlaces(roundStandingList.stream().filter(rs -> rs.getRoundKey().equals(round.getRoundKey()))
+					.collect(Collectors.toList()));
+			round.setGame(gameList.stream().filter(g -> g.getGameKey().equals(round.gameKey)).findFirst().get());
 		}
 		
 		return roundList;
 	}
 	
-	public List<Place> getRoundStandings(Long roundKey) throws Exception
-	{
-		PersonDatabase personDb = (PersonDatabase) DatabaseFactory.getInstance().getDatabase("PERSON", conn);
-		PreparedStatement ps = conn.prepareStatement("SELECT * FROM TournamentLanoel_RoundStanding WHERE RoundKey = ?;");
-		
-		ps.setLong(1, roundKey);
-		
-		ResultSet rs = ps.executeQuery();
-		
-		if(!rs.isBeforeFirst()) return new ArrayList<Place>();
-		
-		List<Place> standingList = new ArrayList<Place>();
-		
-		while(rs.next())
-		{
-			Place currentPlace = new Place();
-			Long personKey = rs.getLong("PersonKey");
-			Person currentPerson = personDb.getPerson(personKey);
-			if(currentPerson == null) continue;
-			int place = rs.getInt("Place");
-			String scoreName = (String) (currentPerson.getTitle() == null ? " " : currentPerson.getTitle());
-			scoreName += ' ' + currentPerson.getPersonName();
-			
-			currentPlace.setPerson(scoreName.trim());
-			currentPlace.setPlace(place);
-			
-			standingList.add(currentPlace);
-		}
-		
-		return standingList;
-	}
-	
 	public void updatePointValues(Map<Integer, Integer> pointMap) throws Exception
 	{
 		Iterator it = pointMap.entrySet().iterator();
+		String sql = "UPDATE TournamentLanoel_PointValues SET PointValue=? WHERE Place=?;";
+		QueryBatch qb = new QueryBatch();
 
-		PreparedStatement ps = conn.prepareStatement("UPDATE TournamentLanoel_PointValues SET PointValue=? WHERE Place=?;");
 		while(it.hasNext())
 		{
 			Map.Entry<Integer, Integer> pair = (Map.Entry)it.next();
-			ps.setInt(1, pair.getValue());
-			ps.setInt(2, pair.getKey());
+			QueryParameter qp1 = new QueryParameter(pair.getValue(), Types.INTEGER);
+			QueryParameter qp2 = new QueryParameter(pair.getKey(), Types.INTEGER);
 			it.remove();
 			
-			ps.addBatch();
+			qb.addBatch(Arrays.asList(qp1, qp2));
 		}
-		ps.executeBatch();
-		conn.commit();
+		DBConnection.executeBatch(sql, qb);
 	}
 	
 	public Map<Integer, Integer> getPointValues() throws Exception
 	{
-		PreparedStatement ps = conn.prepareStatement("SELECT * FROM TournamentLanoel_PointValues");
-		
-		ResultSet rs = ps.executeQuery();
-		
-		if(!rs.isBeforeFirst()) return null;
-		
-		Map<Integer, Integer> pointMap = new HashMap<Integer, Integer>();
-		
-		while(rs.next())
+		String sql = "SELECT * FROM TournamentLanoel_PointValues";
+		List<Map.Entry<Integer, Integer>> entryList =
+				DBConnection.queryWithParameters(sql, new ArrayList<>(), TournamentLanoelDatabase::getPointValuesFromResultSet);
+
+		Map<Integer, Integer> pointValueMap = new HashMap<>();
+		for(Map.Entry<Integer, Integer> entry : entryList)
+		{
+			pointValueMap.put(entry.getKey(), entry.getValue());
+		}
+		return pointValueMap;
+	}
+
+	public static TournamentLanoel getTournamentFromResultSet(ResultSet rs)
+	{
+		try
+		{
+			TournamentLanoel t = _gson.fromJson(rs.getString("TournamentData"), TournamentLanoel.class);
+			t.tournamentKey = rs.getLong("TournamentKey");
+			return t;
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public static Place getRoundStandingFromResultSet(ResultSet rs)
+	{
+		try
+		{
+			Place currentPlace = new Place();
+			TournamentParticipant currentPerson = _gson.fromJson(rs.getString("TournamentParticipantData"), TournamentParticipant.class);
+			currentPlace.setPlace(rs.getInt("Place"));
+			currentPlace.setParticipant(currentPerson);
+			return currentPlace;
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+			return null;
+		} catch (Exception e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public static Round getRoundFromResultSet(ResultSet rs)
+	{
+		try
+		{
+			Round currentRound = new Round();
+			currentRound.setRoundNumber(rs.getInt("RoundNumber"));
+			currentRound.setRoundKey(rs.getLong("RoundKey"));
+			currentRound.setGame(_gson.fromJson(rs.getString("GameData"), Game.class));
+			currentRound.gameKey = rs.getLong("GameKey");
+			return currentRound;
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public static Map.Entry<Integer, Integer> getPointValuesFromResultSet(ResultSet rs)
+	{
+		try
 		{
 			int place = rs.getInt("Place");
 			int pointValue = rs.getInt("PointValue");
-			
-			pointMap.put(place, pointValue);
+			return new AbstractMap.SimpleEntry<>(place, pointValue);
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+			return new AbstractMap.SimpleEntry<>(null, null);
 		}
-		
-		return pointMap;
 	}
 }

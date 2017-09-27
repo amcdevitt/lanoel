@@ -7,15 +7,15 @@ import computer.lanoel.contracts.Tournaments.TournamentParticipant;
 
 import java.sql.*;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Created by amcde on 4/26/2017.
  */
-public class TournamentDatabase extends DatabaseManager {
+public class TournamentDatabase {
 
-    private Gson _gson;
-    public TournamentDatabase(Connection conn){
-        super(conn);
+    private static Gson _gson;
+    public TournamentDatabase(){
         _gson = new GsonBuilder().setExclusionStrategies(new DatabaseJsonExclusions()).create();
     }
 
@@ -23,19 +23,10 @@ public class TournamentDatabase extends DatabaseManager {
     {
         String sql = "INSERT INTO TournamentParticipant (TournamentKey, TournamentParticipantData)" +
                 " VALUES (?,?);";
-        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-        ps.setLong(1, tournamentKey);
-        ps.setString(2, _gson.toJson(part));
+        QueryParameter qp1 = new QueryParameter(tournamentKey, Types.BIGINT);
+        QueryParameter qp2 = new QueryParameter(_gson.toJson(part), Types.OTHER);
 
-        ps.execute();
-
-        try(ResultSet keys = ps.getGeneratedKeys())
-        {
-            if(keys.next())
-            {
-                part.tournamentParticipantKey = keys.getLong(1);
-            }
-        }
+        part.tournamentParticipantKey = DBConnection.executeUpdateReturnGeneratedKey(sql, Arrays.asList(qp1, qp2));
 
         return part;
     }
@@ -43,112 +34,76 @@ public class TournamentDatabase extends DatabaseManager {
     protected TournamentParticipant updateParticipant(TournamentParticipant part) throws SQLException
     {
         String sql = "UPDATE TournamentParticipant SET TournamentParticipantData = ? WHERE TournamentParticipantKey = ?;";
-        PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setString(1, _gson.toJson(part));
-        ps.setLong(2, part.tournamentParticipantKey);
+        QueryParameter qp1 = new QueryParameter(_gson.toJson(part), Types.OTHER);
+        QueryParameter qp2 = new QueryParameter(part.tournamentParticipantKey, Types.BIGINT);
 
-        ps.executeUpdate();
+        DBConnection.executeUpdateWithParams(sql, Arrays.asList(qp1, qp2));
 
         return part;
     }
 
-    protected void RemoveParticipantFromTournament(TournamentParticipant part) throws SQLException
+    protected void removeParticipantFromTournament(Long partKey) throws SQLException
     {
         String sql = "DELETE FROM TournamentParticipant WHERE TournamentParticipantKey = ?;";
-        PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setLong(1, part.tournamentParticipantKey);
-        ps.execute();
+        QueryParameter qp = new QueryParameter(partKey, Types.BIGINT);
+        DBConnection.executeWithParams(sql, Arrays.asList(qp));
     }
 
-    protected Set<TournamentParticipant> getTournamentParticipantList(long tournamentKey)
+    protected Set<TournamentParticipant> getTournamentParticipantList(long tournamentKey) throws SQLException
     {
         String sql = "SELECT * FROM TournamentParticipant WHERE TournamentKey = ?;";
-        Set<TournamentParticipant> tpList = new HashSet<>();
-
-        try(PreparedStatement ps = conn.prepareStatement(sql))
-        {
-            ps.setLong(1, tournamentKey);
-            ResultSet rs = ps.executeQuery();
-
-            if(!rs.isBeforeFirst())
-            {
-                return tpList;
-            }
-
-            while(rs.next())
-            {
-                TournamentParticipant tp = _gson.fromJson(rs.getString("TournamentParticipantData"), TournamentParticipant.class);
-                tp.tournamentParticipantKey = rs.getLong("TournamentParticipantKey");
-                tpList.add(tp);
-            }
-
-            return tpList;
-
-        } catch (SQLException e)
-        {
-            System.out.println("Exception in getTournamentParticipantList: " + e.getMessage());
-            return tpList;
-        }
+        QueryParameter qp = new QueryParameter(tournamentKey, Types.BIGINT);
+        return new HashSet<>(DBConnection.queryWithParameters(sql, Arrays.asList(qp),
+                TournamentDatabase::getTournamentParticipantFromResultSet));
     }
 
-    protected Tournament createTournament(Tournament tournament) throws SQLException
+    protected Tournament createTournament(Tournament tournament, String tournamentType) throws SQLException
     {
-        String sql = "INSERT INTO Tournament (TournamentData) VALUES (?);";
-        PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-        ps.setString(1, _gson.toJson(tournament));
-
-        ps.execute();
-
-        try(ResultSet keys = ps.getGeneratedKeys())
-        {
-            if(keys.next())
-            {
-                tournament.tournamentKey = keys.getLong(1);
-            }
-        }
-
+        String sql = "INSERT INTO Tournament (TournamentType, TournamentData) VALUES (?,?);";
+        QueryParameter qp1 = new QueryParameter(tournamentType, Types.VARCHAR);
+        QueryParameter qp2 = new QueryParameter(_gson.toJson(tournament), Types.OTHER);
+        tournament.tournamentKey = DBConnection.executeUpdateReturnGeneratedKey(sql, Arrays.asList(qp1, qp2));
         return tournament;
     }
 
     protected Tournament updateTournament(Tournament tournament) throws SQLException
     {
         String sql = "UPDATE Tournament SET TournamentData = ? WHERE TournamentKey = ?;";
-        PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setString(1, _gson.toJson(tournament));
-        ps.setLong(2, tournament.tournamentKey);
-        ps.executeUpdate();
-
+        QueryParameter qp1 = new QueryParameter(_gson.toJson(tournament), Types.OTHER);
+        QueryParameter qp2 = new QueryParameter(tournament.tournamentKey, Types.BIGINT);
+        DBConnection.executeUpdateWithParams(sql, Arrays.asList(qp1, qp2));
         return tournament;
     }
 
-    protected List<Tournament> getTournamentList()
+    protected List<Tournament> getTournamentList(Function<ResultSet, Object> resultFunc) throws SQLException
     {
         String sql = "SELECT * FROM Tournament ORDER BY Created DESC";
-        List<Tournament> tList = new ArrayList<>();
-
-        try (PreparedStatement ps = conn.prepareStatement(sql))
+        List<Tournament> tList = DBConnection.queryWithParameters(sql, new ArrayList<>(), resultFunc);
+        for(Tournament tourn : tList)
         {
-            ResultSet rs = ps.executeQuery();
+            tourn.participants = getTournamentParticipantList(tourn.tournamentKey);
+        }
+        return tList;
+    }
 
-            if(!rs.isBeforeFirst())
-            {
-                return tList;
-            }
+    public List<Tournament> getTournamentListByType(String type, Function<ResultSet, Object> resultFunc) throws SQLException
+    {
+        String sql = "SELECT * FROM Tournament WHERE TournamentType = ? ORDER BY Created DESC";
+        QueryParameter qp = new QueryParameter(type, Types.VARCHAR);
+        return DBConnection.queryWithParameters(sql, Arrays.asList(qp), resultFunc);
+    }
 
-            while(rs.next())
-            {
-                Tournament t = _gson.fromJson(rs.getString("TournamentData"), Tournament.class);
-                t.tournamentKey = rs.getLong("TournamentKey");
-                t.setCreatedFromSql(rs.getDate("Created"));
-                tList.add(t);
-            }
-
-            return tList;
-
+    public static TournamentParticipant getTournamentParticipantFromResultSet(ResultSet rs)
+    {
+        try
+        {
+            TournamentParticipant tp = _gson.fromJson(rs.getString("TournamentParticipantData"), TournamentParticipant.class);
+            tp.tournamentParticipantKey = rs.getLong("TournamentParticipantKey");
+            return tp;
         } catch (SQLException e)
         {
-            System.out.println("Exception in getTournamentList: " + e);
-            return tList;
+            e.printStackTrace();
+            return null;
         }
     }
 }
