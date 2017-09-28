@@ -11,6 +11,7 @@ import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Tournaments.Lanoel.Round;
 import computer.lanoel.contracts.Tournaments.Lanoel.TournamentLanoel;
+import computer.lanoel.contracts.Tournaments.Tournament;
 import computer.lanoel.contracts.Tournaments.TournamentParticipant;
 import computer.lanoel.exceptions.BadRequestException;
 import computer.lanoel.exceptions.InvalidSessionException;
@@ -59,6 +60,11 @@ public class LanoelManager {
 		TournamentLanoel tourn = new TournamentLanoel();
     	tourn.tournamentName = tournamentName;
     	return _lanoelTournDb.insertTournament(tourn);
+	}
+
+	public List<TournamentLanoel> getLanoelTournaments() throws SQLException
+	{
+		return _lanoelTournDb.getTournamentList();
 	}
 
 	public TournamentLanoel manageParticipants(Long tournamentKey, List<TournamentParticipant> participantList) throws SQLException

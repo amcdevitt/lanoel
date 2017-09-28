@@ -137,7 +137,8 @@ public class PreEventManager {
 		String regex = "[\\p{P}\\p{S}]";
 		return gameName.toLowerCase()
 				.replaceAll(regex, "").replaceAll(" ", "").replaceAll("'", "")
-				.replaceAll("-", "").replaceAll("_", "").replaceAll("!", "").replaceAll("\\.", "").replaceAll(".","");
+				.replaceAll("-", "").replaceAll("_", "").replaceAll("!", "")
+				.replaceAll("\\.", "");
 	}
 	
 	public Set<Game> manageGame(Game game) throws Exception

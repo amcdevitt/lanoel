@@ -28,13 +28,14 @@ public class GameDatabase{
 	public Long insertGame(Game game) throws Exception
 	{
 		QueryParameter qp = new QueryParameter(_gson.toJson(game), Types.OTHER);
-		return DBConnection.queryWithParametersGetGeneratedKey(LanoelSql.INSERT_GAME, Arrays.asList(qp));
+		return DBConnection.executeUpdateReturnGeneratedKey(LanoelSql.INSERT_GAME, Arrays.asList(qp));
 	}
 	
 	public Long updateGame(Game game) throws Exception
 	{
 		QueryParameter qp = new QueryParameter(_gson.toJson(game), Types.OTHER);
-		DBConnection.executeWithParams(LanoelSql.UPDATE_GAME, Arrays.asList(qp));
+		QueryParameter qp2 = new QueryParameter(game.getGameKey(), Types.BIGINT);
+		DBConnection.executeWithParams(LanoelSql.UPDATE_GAME, Arrays.asList(qp, qp2));
 		return game.getGameKey();
 	}
 	

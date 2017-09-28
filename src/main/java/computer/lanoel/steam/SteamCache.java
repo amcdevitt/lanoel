@@ -236,6 +236,10 @@ public class SteamCache {
 		for(Person person : _personCache)
 		{
 			boolean hasGame = false;
+			if(person.getSteamInfo() == null || person.getSteamInfo().getSteamGameList() == null)
+			{
+				continue;
+			}
 			for(PlayerSteamGame personGame : person.getSteamInfo().getSteamGameList())
 			{
 				if(personGame.getAppid().equals(game.getSteamGame().getAppid()))

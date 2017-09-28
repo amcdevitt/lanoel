@@ -2,6 +2,7 @@ package computer.lanoel.platform.database;
 
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
+import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Tournaments.Lanoel.TournamentLanoel;
 import computer.lanoel.contracts.Tournaments.Tournament;
@@ -25,6 +26,7 @@ public class DatabaseJsonExclusions implements ExclusionStrategy {
                 (f.getDeclaringClass() == Tournament.class && f.getName().equalsIgnoreCase("TournamentKey")) ||
                 (f.getDeclaringClass() == TournamentLanoel.class && f.getName().equalsIgnoreCase("TournamentKey")) ||
                 (f.getDeclaringClass() == Tournament.class && f.getName().equalsIgnoreCase("TournamentName")) ||
-                (f.getDeclaringClass() == TournamentLanoel.class && f.getName().equalsIgnoreCase("TournamentName"));
+                (f.getDeclaringClass() == TournamentLanoel.class && f.getName().equalsIgnoreCase("TournamentName")) ||
+                (f.getDeclaringClass() == Game.class && f.getName().equalsIgnoreCase("GameKey"));
     }
 }

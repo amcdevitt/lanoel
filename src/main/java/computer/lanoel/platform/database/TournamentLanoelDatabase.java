@@ -113,15 +113,22 @@ public class TournamentLanoelDatabase extends TournamentDatabase {
 
 	public TournamentLanoel getTournament(Long tournamentKey) throws SQLException
 	{
-		TournamentDatabase tdb = new TournamentDatabase();
-		List<Round> roundList = getRounds(tournamentKey);
-
-		TournamentLanoel tourn = (TournamentLanoel)tdb.getTournamentList(TournamentLanoelDatabase::getTournamentFromResultSet).stream()
+		return getTournamentList().stream()
 				.filter(t -> t.tournamentKey.equals(tournamentKey)).findFirst().get();
+	}
 
-		tourn.setRounds(roundList);
-		
-		return tourn;
+	public List<TournamentLanoel> getTournamentList() throws SQLException
+	{
+		TournamentDatabase tdb = new TournamentDatabase();
+
+		List<TournamentLanoel> tList = new ArrayList<>();
+		for(Tournament tourn : tdb.getTournamentList(TournamentLanoelDatabase::getTournamentFromResultSet))
+		{
+			TournamentLanoel lTourn = (TournamentLanoel)tourn;
+			lTourn.setRounds(getRounds(lTourn.tournamentKey));
+		}
+
+		return tList;
 	}
 	
 	public List<Round> getRounds(Long tournamentKey) throws SQLException

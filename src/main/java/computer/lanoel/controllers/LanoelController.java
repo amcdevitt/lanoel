@@ -5,35 +5,26 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import computer.lanoel.communication.ResponseObject;
 import computer.lanoel.contracts.Tournaments.Lanoel.TournamentLanoel;
 import computer.lanoel.contracts.Tournaments.TournamentParticipant;
+import computer.lanoel.exceptions.BadRequestException;
+import computer.lanoel.exceptions.InvalidSessionException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import computer.lanoel.communication.HttpHelper;
 import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Tournaments.Lanoel.Round;
 import computer.lanoel.platform.LanoelManager;
-import computer.lanoel.platform.database.TournamentLanoelDatabase;
 
 @RestController
 @RequestMapping("/tournament")
 public class LanoelController {
 
-	public int _requestCount = 0;
-	
-	public LanoelController()
-	{
-	}
-	/*
 	@ExceptionHandler(InvalidSessionException.class)
 	@ResponseStatus(HttpStatus.UNAUTHORIZED)
 	public ResponseEntity<Object> HandleSessionError(Exception e)
@@ -60,7 +51,18 @@ public class LanoelController {
 		ro.message = e.getMessage();
  		return new ResponseEntity<Object>(ro, HttpHelper.commonHttpHeaders(), HttpStatus.OK);
 	}
-*/
+
+	@RequestMapping(
+			value = "/lanoel",
+			method = RequestMethod.GET,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<List<TournamentLanoel>> getLanoelTournaments(
+			HttpServletRequest request)	throws Exception
+	{
+		LanoelManager tm = new LanoelManager(HttpHelper.getUserFromRequest(request));
+		return new ResponseEntity<>(tm.getLanoelTournaments(), HttpHelper.commonHttpHeaders(), HttpStatus.OK);
+	}
+
     @RequestMapping(
     		value = "/{tournamentKey}", 
     		method = RequestMethod.GET, 

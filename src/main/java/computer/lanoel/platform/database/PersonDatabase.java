@@ -21,8 +21,8 @@ public class PersonDatabase {
 	
 	public Long insertPerson(Person person) throws Exception
 	{
-		QueryParameter qp = new QueryParameter(person, Types.OTHER);
-		person.setPersonKey(DBConnection.queryWithParametersGetGeneratedKey(
+		QueryParameter qp = new QueryParameter(_gson.toJson(person), Types.OTHER);
+		person.setPersonKey(DBConnection.executeUpdateReturnGeneratedKey(
 				LanoelSql.INSERT_PERSON, Arrays.asList(qp)));
 
 		return person.getPersonKey();
