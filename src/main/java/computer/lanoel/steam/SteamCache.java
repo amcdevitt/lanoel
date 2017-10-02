@@ -1,5 +1,7 @@
 package computer.lanoel.steam;
 
+import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,6 +67,7 @@ public class SteamCache {
 		refreshPlayerCache();
 		refreshVotesCache();
 		refreshGameOwnershipCache();
+		setCostPerPersonForTopFiveGames();
 	}
 	
 	public void refreshVotesCache() throws Exception
@@ -272,5 +275,22 @@ public class SteamCache {
 	public Set<SteamGame> getFullSteamGameList()
 	{
 		return _fullSteamGameSet;
+	}
+
+	public void setCostPerPersonForTopFiveGames() throws Exception
+	{
+		List<Long> topFiveGameKeys = _gameDb.getTopFiveGames().stream().map(f -> f.getGameKey()).collect(Collectors.toList());
+		for(Person person : _personCache)
+		{
+			BigDecimal total = new BigDecimal(0);
+			for(GameOwnership owner : _ownershipCache.stream().filter(o -> topFiveGameKeys.contains(o.game.getGameKey())).collect(Collectors.toList()))
+			{
+				if(owner.nonOwners.stream().filter(n -> n.getPersonKey().equals(person.getPersonKey())).findAny().isPresent())
+				{
+					total = total.add(new BigDecimal(owner.game.getSteamInfo().price_overview.finalPrice));
+				}
+			}
+			person.setPriceToBuyTopFive(total);
+		}
 	}
 }

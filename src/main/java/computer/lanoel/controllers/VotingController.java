@@ -143,7 +143,7 @@ public class VotingController {
     		HttpServletRequest request) throws NumberFormatException, Exception
     { 
     	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
-    	return new ResponseEntity<Set<Person>>(pem.getPersons(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
+    	return new ResponseEntity<>(pem.getPersons(), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
     
     @RequestMapping(

@@ -2,6 +2,8 @@ package computer.lanoel.contracts;
 
 import computer.lanoel.steam.contracts.PlayerSteamInformation;
 
+import java.math.BigDecimal;
+
 public class Person
 {
 	private Long PersonKey;
@@ -14,6 +16,8 @@ public class Person
 	
 	private String userName;
 	private PlayerSteamInformation steamInfo;
+
+	private BigDecimal priceToBuyTopFive;
 	
 	public Person(){}
 	
@@ -125,5 +129,17 @@ public class Person
 	}
 	public void setSteamInfo(PlayerSteamInformation steamInfo) {
 		this.steamInfo = steamInfo;
+	}
+
+	public BigDecimal getPriceToBuyTopFive() {
+		return priceToBuyTopFive;
+	}
+
+	public void setPriceToBuyTopFive(BigDecimal priceToBuyTopFive) {
+		if(priceToBuyTopFive == null || priceToBuyTopFive.doubleValue() == 0)
+		{
+			this.priceToBuyTopFive = new BigDecimal(0);
+		}
+		this.priceToBuyTopFive = priceToBuyTopFive;
 	}
 }
