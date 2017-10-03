@@ -1,11 +1,7 @@
 package computer.lanoel.platform;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import computer.lanoel.communication.LANoelAuth;
@@ -57,7 +53,7 @@ public class PreEventManager {
 		return _user == null ? null : _user.getUser().getSessionId();
 	}
 	
-	public void vote(Vote vote, Long personKey) throws Exception
+	public List<Vote> vote(Vote vote, Long personKey) throws Exception
 	{
 		if(_user == null)
 		{
@@ -102,7 +98,7 @@ public class PreEventManager {
     	{
     		_voteDb.insertVote(vote);
     		SteamCache.instance().refreshVotesCache();
-    		return;
+    		return new ArrayList<>();
     	}
     	else
     	{
@@ -113,12 +109,13 @@ public class PreEventManager {
     				vote.setVoteKey(recordedVote.getVoteKey());
     				_voteDb.updateVote(vote);
     				SteamCache.instance().refreshVotesCache();
-    				return;
+    				return _voteDb.getVotesForPerson(vote.getPersonKey());
     			}
     		}    		
     		_voteDb.insertVote(vote);
     	}
     	SteamCache.instance().refreshVotesCache();
+    	return _voteDb.getVotesForPerson(vote.getPersonKey());
 	}
 	
 	public Set<Game> getGameList()

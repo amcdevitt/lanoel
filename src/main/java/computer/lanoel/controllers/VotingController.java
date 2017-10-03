@@ -150,17 +150,14 @@ public class VotingController {
     		value = "/person/{personKey}/vote", 
     		method = RequestMethod.POST, 
     		produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ResponseObject> vote(
+    public ResponseEntity<List<Vote>> vote(
     		@RequestHeader(required = false) HttpHeaders requestHeaders, 
     		@PathVariable Long personKey, @RequestBody Vote vote,
     		HttpServletRequest request) 
     				throws NumberFormatException, Exception
     { 
     	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
-    	pem.vote(vote, personKey);
-    	ResponseObject ro = new ResponseObject();
-    	ro.message = "Vote counted!";
-    	return new ResponseEntity<ResponseObject>(ro, HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
+    	return new ResponseEntity<>(pem.vote(vote, personKey), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
     
     @RequestMapping(
