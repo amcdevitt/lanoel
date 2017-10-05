@@ -14,7 +14,8 @@ public class SteamGameInformation {
 	public String header_image;
 	public String about_the_game;
 	public String detailed_description;
-	public int steam_appid;
+	public Long steam_appid;
 	public String name;
 	public List<Category> categories;
+	public String type;
 }

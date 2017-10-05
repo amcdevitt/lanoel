@@ -2,13 +2,7 @@ package computer.lanoel.steam;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,15 +11,14 @@ import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Vote;
 import computer.lanoel.platform.InitialPersonInfo;
+import computer.lanoel.platform.PreEventManager;
 import computer.lanoel.platform.database.GameDatabase;
 import computer.lanoel.platform.database.PersonDatabase;
 import computer.lanoel.platform.database.VoteDatabase;
-import computer.lanoel.steam.contracts.GameOwnership;
-import computer.lanoel.steam.contracts.PlayerSteamGame;
-import computer.lanoel.steam.contracts.PlayerSteamInformation;
-import computer.lanoel.steam.contracts.SteamGame;
+import computer.lanoel.steam.contracts.*;
 import computer.lanoel.steam.models.PlayerGameListResponse;
 import computer.lanoel.steam.models.SteamFullListResponse;
+import computer.lanoel.steam.models.SteamGameInformationResponse;
 import computer.lanoel.steam.models.SteamPlayerSummaryResponse;
 
 public class SteamCache {
@@ -33,7 +26,7 @@ public class SteamCache {
 	private static SteamCache _cache;
 	private Set<Person> _personCache;
 	private Set<Game> _lanoelGameCache;
-	private Map<String, SteamGame> _steamGameCache;
+	private Map<String, List<Long>> _steamGameCache;
 	private Set<SteamGame> _fullSteamGameSet;
 	private Set<Vote> _votesCache;
 	private List<GameOwnership> _ownershipCache;
@@ -44,10 +37,10 @@ public class SteamCache {
 	private SteamCache()
 	{
 		_personCache = InitialPersonInfo.personSet();
-		_lanoelGameCache = new HashSet<Game>();
-		_steamGameCache = new HashMap<String, SteamGame>();
-		_fullSteamGameSet = new HashSet<SteamGame>();
-		_votesCache = new HashSet<Vote>();
+		_lanoelGameCache = new HashSet<>();
+		_steamGameCache = new HashMap<>();
+		_fullSteamGameSet = new HashSet<>();
+		_votesCache = new HashSet<>();
 		_ownershipCache = new ArrayList<>();
 	}
 	
@@ -148,7 +141,20 @@ public class SteamCache {
 		SteamFullListResponse response = SteamService.getFullGameList();
 		_fullSteamGameSet = response.applist.apps.app;
 		_steamGameCache.clear();
-		_steamGameCache.putAll(_fullSteamGameSet.stream().collect(Collectors.toMap(SteamGame::getName, p -> p,(game1, game2) -> {return game1;})));
+		for(SteamGame game : _fullSteamGameSet)
+		{
+			String filteredName = PreEventManager.gameNameFilter(game.getName());
+			if(_steamGameCache.containsKey(filteredName))
+			{
+				List<Long> appIdList = _steamGameCache.get(filteredName);
+				appIdList.add(game.getAppid());
+				_steamGameCache.put(filteredName, appIdList);
+				continue;
+			}
+			List<Long> idList = new ArrayList<>();
+			idList.add(game.getAppid());
+			_steamGameCache.put(filteredName, idList);
+		}
 	}
 	
 	private void refreshPlayerCache() throws Exception
@@ -189,10 +195,39 @@ public class SteamCache {
 		List<Game> gameList = _gameDb.getGameList();
 		for(Game game : gameList)
 		{
-			game.setSteamGame(_steamGameCache.get(game.getGameName()));
-			if(game.getSteamGame() == null) continue;
-			
-			game.setSteamInfo(SteamService.getFullGameInformation(game.getSteamGame().getAppid()).data);
+			List<Long> steamGameAppKeys = _steamGameCache.get(PreEventManager.gameNameFilter(game.getGameName()));
+			SteamGameInformation gameInfo = null;
+			if(steamGameAppKeys == null)
+			{
+				continue;
+			}
+			for(Long appKey : steamGameAppKeys)
+			{
+				SteamGameInformationResponse info = SteamService.getFullGameInformation(appKey);
+				if(info.data == null)
+				{
+					continue;
+				}
+				if(gameInfo == null)
+				{
+					gameInfo = info.data;
+				}
+				else
+				{
+					if(info.data.type.equalsIgnoreCase("game"))
+					{
+						gameInfo = info.data;
+					}
+				}
+			}
+			if(gameInfo != null)
+			{
+				SteamGame sg = new SteamGame();
+				sg.setName(game.getGameName());
+				sg.setAppid(gameInfo.steam_appid);
+				game.setSteamGame(sg);
+				game.setSteamInfo(gameInfo);
+			}
 		}
 		
 		_lanoelGameCache.clear();

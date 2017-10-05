@@ -129,7 +129,7 @@ public class PreEventManager {
     			.filter(g -> g.getGameKey() == gameKey).collect(Collectors.toList()).get(0);
 	}
 	
-	private String gameNameFilter(String gameName)
+	public static String gameNameFilter(String gameName)
 	{
 		String regex = "[\\p{P}\\p{S}]";
 		return gameName.toLowerCase()
@@ -233,5 +233,22 @@ public class PreEventManager {
 		}
 		
 		return _personDb.updateSuggestion(sug);
+	}
+
+	public Set<Game> setGameToUseSteamGame(Long gameKey, Long steamAppId) throws Exception
+	{
+		Optional<SteamGame> steamGame = SteamCache.instance().getFullSteamGameList()
+				.stream().filter(g -> g.getAppid().equals(steamAppId)).findFirst();
+
+		if(!steamGame.isPresent())
+		{
+			throw new Exception("Steam game with appId " + steamAppId + " does not exist.");
+		}
+
+		Game game = _gameDb.getGame(gameKey);
+		game.setGameName(steamGame.get().getName());
+		_gameDb.updateGame(game);
+		SteamCache.instance().refresh();
+		return SteamCache.instance().getGames();
 	}
 }

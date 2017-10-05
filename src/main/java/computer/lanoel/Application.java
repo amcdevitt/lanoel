@@ -20,7 +20,7 @@ import computer.lanoel.steam.SteamCache;
 @EnableScheduling
 public class Application {
 
-public static void main(String[] args) {
+public static void main(String[] args) throws Exception {
 		
 		try
 		{
@@ -41,6 +41,8 @@ public static void main(String[] args) {
 		} catch (Exception ex)
 		{
 			System.out.println("Could not initialize lanoel");
+			ex.printStackTrace();
+			throw ex;
 		}
 
 		System.out.println(ServiceConstants.getServiceNameAsciiImage());

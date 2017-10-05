@@ -244,6 +244,19 @@ public class VotingController {
     	PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
     	return new ResponseEntity<Suggestion>(pem.manageSuggestion(sug), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
     }
+
+	@RequestMapping(
+			value = "/game/{gameKey}/steamappid/{steamAppId}",
+			method = RequestMethod.POST,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Set<Game>> updateGameToSteamApp(
+			HttpServletRequest request,
+			@PathVariable Long gameKey,
+			@PathVariable Long steamAppId) throws Exception
+	{
+		PreEventManager pem = new PreEventManager(HttpHelper.getUserFromRequest(request));
+		return new ResponseEntity<>(pem.setGameToUseSteamGame(gameKey, steamAppId), HttpHelper.commonHttpHeaders(pem.getSessionIdForUser()), HttpStatus.OK);
+	}
     
     @Scheduled(fixedDelay = 1000 * 60 * 5)
     public void refreshCache()
