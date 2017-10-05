@@ -74,11 +74,17 @@ public class GameDatabase{
 	
 	public List<Game> getTopFiveGames() throws Exception
 	{
-		String gamesByUniquePersonVotesSql = "select g.*, count(distinct v.PersonKey) as UniqueVotes " +
-				"from Vote v join Game g " +
+		String gamesByUniquePersonVotesSql = "select g.*, " +
+				"count(distinct v.PersonKey) as UniqueVotes, " +
+				"sum(v.VoteNumber) as Points " +
+				"from Vote v " +
+				"join Game g " +
 				"on g.GameKey = v.GameKey " +
-				"group by v.GameKey order by count(distinct v.PersonKey) " +
-				"desc limit 5";
+				"group by v.GameKey " +
+				"order by sum(v.VoteNumber) desc, " +
+				"count(distinct v.PersonKey) desc, " +
+				"g.GameKey " +
+				"limit 5;";
 
 		return DBConnection.queryWithParameters(gamesByUniquePersonVotesSql,
 				new ArrayList<>(), GameDatabase::getGameWithUniqueVotesFromResultSet);
