@@ -314,7 +314,7 @@ public class SteamCache {
 
 	public void setCostPerPersonForTopFiveGames() throws Exception
 	{
-		List<Long> topFiveGameKeys = _gameDb.getTopFiveGames().stream().map(f -> f.getGameKey()).collect(Collectors.toList());
+		List<Long> topFiveGameKeys = _gameDb.getTopFiveGames().stream().filter(g -> !g.isFree()).map(f -> f.getGameKey()).collect(Collectors.toList());
 		for(Person person : _personCache)
 		{
 			BigDecimal total = new BigDecimal(0);
