@@ -46,27 +46,38 @@ public class GameDatabase{
 	
 	public List<Game> getGameList() throws SQLException
 	{
-		String selectSql = "SELECT * FROM Game";
-		String voteSql = "SELECT * FROM Vote where GameKey = ?;";
+		String selectSql = "select g.*, " +
+				"count(distinct v.PersonKey) as UniqueVotes, " +
+				"sum(v.VoteNumber) as Points " +
+				"from Vote v " +
+				"join Game g " +
+				"on g.GameKey = v.GameKey " +
+				"group by v.GameKey " +
+				"order by sum(v.VoteNumber) desc, " +
+				"count(distinct v.PersonKey) desc, " +
+				"g.GameKey ";
+		String voteSql = "SELECT * FROM Vote;";
 
-		List<Game> gameList = DBConnection.queryWithParameters(selectSql, Arrays.asList(), GameDatabase::getGameFromResultSet);
+		List<Game> gameList = DBConnection.queryWithParameters(selectSql, Arrays.asList(), GameDatabase::getGameWithUniqueVotesFromResultSet);
+		List<Vote> votes = DBConnection.queryWithParameters(voteSql, new ArrayList<>(), VoteDatabase::getVoteFromResultSet);
 
 		for(Game game : gameList)
 		{
-			QueryParameter qp = new QueryParameter(game.getGameKey(), Types.BIGINT);
-			List<Vote> votes = DBConnection.queryWithParameters(voteSql, Arrays.asList(qp), VoteDatabase::getVoteFromResultSet);
-
 			if(null == votes || votes.size() == 0)
 			{
 				game.setVoteTotal(0);
-			} else
+				continue;
+			}
+			else
 			{
-				int total = 0;
+				game.setVoteTotal(0);
 				for(Vote vote : votes)
 				{
-					total += vote.getVoteNumber();
+					if(vote.getGameKey().equals(game.getGameKey()))
+					{
+						game.setVoteTotal(game.getVoteTotal() + vote.getVoteNumber());
+					}
 				}
-				game.setVoteTotal(total);
 			}
 		}
 		return gameList;

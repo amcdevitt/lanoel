@@ -92,38 +92,6 @@ public class SteamCache {
 			
 			vote3.ifPresent(v -> person.setGameVote3(_lanoelGameCache.stream()
 					.filter(g -> g.getGameKey() == v.getGameKey()).findFirst().get().getGameName()));
-			
-			Set<Game> uniqueGamesVotedOn = new HashSet<Game>(); 
-			
-			// Update uniqueVotePersonVotes on Game
-			if(vote1.isPresent())
-			{
-				Game game = _lanoelGameCache.stream().filter(g -> g.getGameKey() == vote1.get().getGameKey()).findFirst()
-					.get();
-				uniqueGamesVotedOn.add(game);
-				game.setNumUniquePersonVotes(game.getNumUniquePersonVotes() + 1);
-			}
-			
-			if(vote2.isPresent())
-			{
-				Game game = _lanoelGameCache.stream().filter(g -> g.getGameKey() == vote2.get().getGameKey()).findFirst()
-					.get();
-				if(!uniqueGamesVotedOn.contains(game))
-				{
-					uniqueGamesVotedOn.add(game);
-					game.setNumUniquePersonVotes(game.getNumUniquePersonVotes() + 1);
-				}
-			}
-			
-			if(vote3.isPresent())
-			{
-				Game game = _lanoelGameCache.stream().filter(g -> g.getGameKey() == vote3.get().getGameKey()).findFirst()
-					.get();
-				if(!uniqueGamesVotedOn.contains(game))
-				{
-					game.setNumUniquePersonVotes(game.getNumUniquePersonVotes() + 1);
-				}
-			}
 		}
 		
 		for(Game game : _lanoelGameCache)
@@ -131,8 +99,6 @@ public class SteamCache {
 			game.setVoteTotal(0);
 			Stream<Vote> votesForGame = votes.stream().filter(v -> v.getGameKey() == game.getGameKey());
 			votesForGame.forEach(v -> game.setVoteTotal(game.getVoteTotal() + v.getVoteNumber()));
-			
-			
 		}
 	}
 	
