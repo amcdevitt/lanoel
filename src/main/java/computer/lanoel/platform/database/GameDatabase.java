@@ -49,8 +49,8 @@ public class GameDatabase{
 		String selectSql = "select g.*, " +
 				"count(distinct v.PersonKey) as UniqueVotes, " +
 				"sum(v.VoteNumber) as Points " +
-				"from Vote v " +
-				"join Game g " +
+				"from Game g " +
+				"left join Vote v " +
 				"on g.GameKey = v.GameKey " +
 				"group by v.GameKey " +
 				"order by sum(v.VoteNumber) desc, " +
