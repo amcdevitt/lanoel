@@ -52,7 +52,7 @@ public class GameDatabase{
 				"from Game g " +
 				"left join Vote v " +
 				"on g.GameKey = v.GameKey " +
-				"group by v.GameKey " +
+				"group by g.GameKey " +
 				"order by sum(v.VoteNumber) desc, " +
 				"count(distinct v.PersonKey) desc, " +
 				"g.GameKey ";
