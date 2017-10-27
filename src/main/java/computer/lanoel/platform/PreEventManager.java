@@ -28,7 +28,7 @@ public class PreEventManager {
 	private GameDatabase _gameDb = new GameDatabase();
 	private PersonDatabase _personDb = new PersonDatabase();
 	
-	private static final String VOTE_CUTOFF_TIME = "2017-10-31T05:00"; // yyyy-MM-dd'T'HH:mm
+	private static final String VOTE_CUTOFF_TIME = "2017-11-01T00:00"; // yyyy-MM-dd'T'HH:mm
 	
 	public PreEventManager(User user) throws Exception
 	{
