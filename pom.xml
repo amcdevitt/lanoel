@@ -18,9 +18,9 @@
     
     <dependencies>
 		<dependency>
-			<groupId>database</groupId>
+			<groupId>com.omegasixcloud</groupId>
 			<artifactId>databaseUpgrader</artifactId>
-			<version>1.105</version>
+			<version>1.106</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
