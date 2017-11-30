@@ -30,10 +30,10 @@ public class DBConnection {
 
             ds.setInitialSize(2);
             ds.setMinIdle(2);
-            ds.setMaxIdle(100);
-            ds.setMaxOpenPreparedStatements(100);
+            ds.setMaxIdle(50);
+            ds.setMaxTotal(50);
 
-            ds.setMaxWaitMillis(5000);
+            ds.setMaxWaitMillis(10000);
 
             ds.setDefaultAutoCommit(false);
 
@@ -70,7 +70,11 @@ public class DBConnection {
 
             while(rs.next())
             {
-                resultList.add((T)resultFunc.apply(rs));
+                T obj = (T)resultFunc.apply(rs);
+                if(obj != null)
+                {
+                    resultList.add(obj);
+                }
             }
 
             return resultList;

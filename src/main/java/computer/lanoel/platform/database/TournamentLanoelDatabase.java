@@ -85,14 +85,20 @@ public class TournamentLanoelDatabase extends TournamentDatabase {
 	
 	public void replaceRoundStandings(Long roundKey, List<Place> places) throws Exception
 	{
-		resetRoundStandings(roundKey);
+		String deleteRoundPlacesSql = "DELETE FROM TournamentLanoel_RoundStanding WHERE RoundKey=?";
+
+		QueryParameter dqp = new QueryParameter(roundKey, Types.BIGINT);
+		DBConnection.executeWithParams(deleteRoundPlacesSql, Arrays.asList(dqp));
+
+		QueryBatch qb = new QueryBatch();
 
 		for(Place place : places) {
 			QueryParameter qp1 = new QueryParameter(roundKey, Types.BIGINT);
 			QueryParameter qp2 = new QueryParameter(place.getParticipant().tournamentParticipantKey, Types.BIGINT);
 			QueryParameter qp3 = new QueryParameter(place.getPlace(), Types.INTEGER);
-			DBConnection.executeUpdateWithParams(TournamentLanoelSql.roundStandingInsertSql(), Arrays.asList(qp1, qp2, qp3));
+			qb.addBatch(Arrays.asList(qp1, qp2, qp3));
 		}
+		DBConnection.executeBatch(TournamentLanoelSql.roundStandingInsertSql(), qb);
 	}
 	
 	public void resetRoundStandings(Long roundKey) throws Exception
@@ -126,6 +132,7 @@ public class TournamentLanoelDatabase extends TournamentDatabase {
 		{
 			TournamentLanoel lTourn = (TournamentLanoel)tourn;
 			lTourn.setRounds(getRounds(lTourn.tournamentKey));
+			tList.add(lTourn);
 		}
 
 		return tList;
@@ -209,17 +216,13 @@ public class TournamentLanoelDatabase extends TournamentDatabase {
 
 	public static Place getRoundStandingFromResultSet(ResultSet rs)
 	{
-		try
-		{
+		try {
 			Place currentPlace = new Place();
 			TournamentParticipant currentPerson = _gson.fromJson(rs.getString("TournamentParticipantData"), TournamentParticipant.class);
 			currentPlace.setPlace(rs.getInt("Place"));
 			currentPlace.setParticipant(currentPerson);
+			currentPlace.setRoundKey(rs.getLong("RoundKey"));
 			return currentPlace;
-		} catch (SQLException e)
-		{
-			e.printStackTrace();
-			return null;
 		} catch (Exception e)
 		{
 			e.printStackTrace();

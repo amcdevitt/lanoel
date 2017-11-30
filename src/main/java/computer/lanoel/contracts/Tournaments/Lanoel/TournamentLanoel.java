@@ -39,20 +39,22 @@ public class TournamentLanoel extends Tournament
 		roundList.add(round);
 	}
 	
-	public void populateScore() throws Exception
-	{		
+	public List<Score> getScores() throws Exception
+	{
 		for(Round round: roundList)
 		{
 			if(round.getPlaces() == null || round.getPlaces().size() == 0) continue;
-			
+
 			for(Place placeObj : round.getPlaces())
 			{
 				String personName = placeObj.getParticipant().participantName;
-				
+
 				Score playerScore = new Score();
 				playerScore.personName = personName;
-				playerScore.score = placeObj.getPointValue();
-				
+				int numberOfPlaces = round.getPlaces().size();
+				int place = placeObj.getPlace() == 99 ? numberOfPlaces : placeObj.getPlace();
+				playerScore.score = numberOfPlaces - place;
+
 				if(scores.contains(playerScore))
 				{
 					Score tempScore = scores.get(scores.indexOf(playerScore));
@@ -64,10 +66,7 @@ public class TournamentLanoel extends Tournament
 				}
 			}
 		}
-	}
-	
-	public List<Score> getScores() throws Exception
-	{		
+
 		return scores;
 	}
 }

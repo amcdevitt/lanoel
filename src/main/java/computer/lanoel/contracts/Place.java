@@ -8,22 +8,9 @@ import computer.lanoel.platform.database.TournamentLanoelDatabase;
 public class Place
 {
 	private int place;
-	private int pointValue;
 	@JsonIgnore
 	private Long roundKey;
 	private TournamentParticipant participant;
-	
-	private void populatePointValues() throws Exception
-	{
-		try
-		{
-			TournamentLanoelDatabase db = new TournamentLanoelDatabase();
-			pointValue = db.getPointValues().get(place);
-		} catch (Exception e)
-		{
-			pointValue = 0;
-		}
-	}
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
@@ -54,26 +41,13 @@ public class Place
 		return true;
 	}
 
-	public int getPointValue()
-	{
-		return pointValue;
-	}
-	
-	public void setPlace(int newPlace) throws Exception
-	{
-		place = newPlace;
-		populatePointValues();
-	}
-	
-	public void setPlace(int newPlace, int newPointValue)
-	{
-		place = newPlace;
-		pointValue = newPointValue;
-	}
-	
 	public int getPlace()
 	{
 		return place;
+	}
+
+	public void setPlace(int place) {
+		this.place = place;
 	}
 
 	public Long getRoundKey()

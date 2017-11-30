@@ -121,10 +121,9 @@ public class LanoelManager {
 	{
 		List<Person> personList = _personDb.getPersonList();
 
-		int i = 1;
 		for(Person person : personList)
 		{
-			_lanoelTournDb.insertRoundStanding(person.getPersonKey(), roundKey, i++);
+			_lanoelTournDb.insertRoundStanding(person.getPersonKey(), roundKey, 99);
 		}
 	}
 	
