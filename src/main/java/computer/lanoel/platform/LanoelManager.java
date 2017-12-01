@@ -7,6 +7,7 @@ import java.util.Map;
 import computer.lanoel.communication.LANoelAuth;
 import computer.lanoel.communication.User;
 import computer.lanoel.communication.UserAccount;
+import computer.lanoel.communication.UserAccountManagerClient;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Tournaments.Lanoel.Round;
@@ -26,6 +27,7 @@ public class LanoelManager {
 	private TournamentLanoelDatabase _lanoelTournDb = new TournamentLanoelDatabase();
 	private GameDatabase _gameDb = new GameDatabase();
 	private PersonDatabase _personDb = new PersonDatabase();
+	private static UserAccountManagerClient _accountManager = new UserAccountManagerClient(ServiceConstants.accountServiceBaseUrl);
 	
 	public LanoelManager(User user) throws Exception
 	{
@@ -43,7 +45,14 @@ public class LanoelManager {
 	
 	private void getLoggedInUser(User user) throws Exception
 	{
-		UserAccount uAcct = LANoelAuth.loggedInUser(user.getSessionId());
+		UserAccount uAcct = null;
+		try
+		{
+			uAcct = _accountManager.getUserAccount(user.getSessionId());
+		} catch (Exception e)
+		{
+			System.out.println("User Not logged in.");
+		}
 		_user = uAcct;
 	}
 	
