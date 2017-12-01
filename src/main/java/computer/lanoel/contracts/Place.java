@@ -2,9 +2,11 @@ package computer.lanoel.contracts;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import computer.lanoel.contracts.Tournaments.TournamentParticipant;
 import computer.lanoel.platform.database.TournamentLanoelDatabase;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Place
 {
 	private int place;

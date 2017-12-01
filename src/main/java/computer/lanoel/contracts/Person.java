@@ -1,9 +1,11 @@
 package computer.lanoel.contracts;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import computer.lanoel.steam.contracts.PlayerSteamInformation;
 
 import java.math.BigDecimal;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Person
 {
 	private Long PersonKey;

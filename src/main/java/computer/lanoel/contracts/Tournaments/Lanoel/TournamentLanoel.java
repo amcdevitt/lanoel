@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Tournaments.Tournament;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TournamentLanoel extends Tournament
 {
 	private List<Round> roundList;

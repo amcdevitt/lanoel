@@ -1,8 +1,10 @@
 package computer.lanoel.contracts;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import computer.lanoel.steam.contracts.SteamGame;
 import computer.lanoel.steam.contracts.SteamGameInformation;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Game implements Comparable<Game>
 {
 	private Long GameKey;

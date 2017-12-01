@@ -1,5 +1,8 @@
 package computer.lanoel.contracts;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Vote
 {
 	private Long VoteKey;
