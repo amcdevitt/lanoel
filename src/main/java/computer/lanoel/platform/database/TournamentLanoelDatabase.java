@@ -219,6 +219,7 @@ public class TournamentLanoelDatabase extends TournamentDatabase {
 		try {
 			Place currentPlace = new Place();
 			TournamentParticipant currentPerson = _gson.fromJson(rs.getString("TournamentParticipantData"), TournamentParticipant.class);
+			currentPerson.tournamentParticipantKey = rs.getLong("ParticipantKey");
 			currentPlace.setPlace(rs.getInt("Place"));
 			currentPlace.setParticipant(currentPerson);
 			currentPlace.setRoundKey(rs.getLong("RoundKey"));
