@@ -24,29 +24,26 @@ public class LanoelManager {
 
 	private UserAccount _user;
 	private TournamentLanoelDatabase _lanoelTournDb = new TournamentLanoelDatabase();
-	private VoteDatabase _voteDb = new VoteDatabase();
 	private GameDatabase _gameDb = new GameDatabase();
 	private PersonDatabase _personDb = new PersonDatabase();
 	
 	public LanoelManager(User user) throws Exception
 	{
 		getLoggedInUser(user);
-		
+		_lanoelTournDb = new TournamentLanoelDatabase();
+	}
+
+	private void checkAdmin() throws Exception
+	{
 		if(!LANoelAuth.isAdminUser(_user))
 		{
-			throw new InvalidSessionException("User is not an admin user", user.getSessionId());
+			throw new BadRequestException("User is not an admin user");
 		}
-		_lanoelTournDb = new TournamentLanoelDatabase();
 	}
 	
 	private void getLoggedInUser(User user) throws Exception
 	{
 		UserAccount uAcct = LANoelAuth.loggedInUser(user.getSessionId());
-		
-		if(uAcct == null)
-		{
-			throw new InvalidSessionException("User not logged in!", user.getSessionId());
-		}
 		_user = uAcct;
 	}
 	
@@ -57,6 +54,7 @@ public class LanoelManager {
 	
 	public Long createTournament(String tournamentName) throws Exception
 	{
+		checkAdmin();
 		TournamentLanoel tourn = new TournamentLanoel();
     	tourn.tournamentName = tournamentName;
     	return _lanoelTournDb.insertTournament(tourn);
@@ -67,8 +65,9 @@ public class LanoelManager {
 		return _lanoelTournDb.getTournamentList();
 	}
 
-	public TournamentLanoel manageParticipants(Long tournamentKey, List<TournamentParticipant> participantList) throws SQLException
+	public TournamentLanoel manageParticipants(Long tournamentKey, List<TournamentParticipant> participantList) throws Exception
 	{
+		checkAdmin();
 		for(TournamentParticipant part : participantList)
 		{
 			if(part.tournamentParticipantKey != null)
@@ -82,14 +81,16 @@ public class LanoelManager {
 		return _lanoelTournDb.getTournament(tournamentKey);
 	}
 
-	public TournamentLanoel removeParticipant(Long tournamentKey, Long participantKey) throws SQLException
+	public TournamentLanoel removeParticipant(Long tournamentKey, Long participantKey) throws Exception
 	{
+		checkAdmin();
 		_lanoelTournDb.removeParticipant(participantKey);
 		return _lanoelTournDb.getTournament(tournamentKey);
 	}
 	
 	public void createRound(Round round, Long tournamentKey) throws Exception
 	{
+		checkAdmin();
 		if(round.getGame() == null)
     	{
     		throw new BadRequestException("Please provide a game");
@@ -119,6 +120,7 @@ public class LanoelManager {
 
 	private void initializeRound(Long roundKey) throws Exception
 	{
+		checkAdmin();
 		List<Person> personList = _personDb.getPersonList();
 
 		for(Person person : personList)
@@ -129,6 +131,7 @@ public class LanoelManager {
 	
 	public void recordResult(Long tournamentKey, Long personKey, int roundNumber, int place) throws Exception
 	{
+		checkAdmin();
     	List<Round> roundList = _lanoelTournDb.getRounds(tournamentKey);
     	Round tempRound = new Round();
     	tempRound.setRoundNumber(roundNumber);
@@ -147,6 +150,7 @@ public class LanoelManager {
 	
 	public void updateScores(Long tournamentKey, int roundNumber, List<Place> places) throws Exception
 	{
+		checkAdmin();
     	List<Round> roundList = _lanoelTournDb.getTournament(tournamentKey).getRounds();
     	Round tempRound = new Round();
     	tempRound.setRoundNumber(roundNumber);
@@ -165,6 +169,7 @@ public class LanoelManager {
 	
 	public void resetRoundScores(Long tournamentKey, int roundNumber) throws Exception
 	{
+		checkAdmin();
 		List<Round> roundList = _lanoelTournDb.getTournament(tournamentKey).getRounds();
     	Round tempRound = new Round();
     	tempRound.setRoundNumber(roundNumber);
@@ -183,6 +188,7 @@ public class LanoelManager {
 	
 	public void setPointValues(Map<Integer, Integer> pointMap) throws Exception
 	{
+		checkAdmin();
 		_lanoelTournDb.updatePointValues(pointMap);
 	}
 
