@@ -1,11 +1,14 @@
 package computer.lanoel.contracts.Tournaments.Lanoel;
 
 
+import computer.lanoel.contracts.Tournaments.TournamentParticipant;
+
 public class Score
 {
 
 	public String personName;
 	public int score;
+	public TournamentParticipant participant;
 	
 	public Score()
 	{

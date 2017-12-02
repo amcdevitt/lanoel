@@ -53,6 +53,7 @@ public class TournamentLanoel extends Tournament
 
 				Score playerScore = new Score();
 				playerScore.personName = personName;
+				playerScore.participant = placeObj.getParticipant();
 				int numberOfPlaces = round.getPlaces().size();
 				int place = placeObj.getPlace() == 99 ? numberOfPlaces : placeObj.getPlace();
 				playerScore.score = numberOfPlaces - place;
