@@ -102,7 +102,7 @@ public class SteamCache {
 		}
 	}
 	
-	public void refreshFullSteamGameCache()
+	public void refreshFullSteamGameCache() throws Exception
 	{
 		SteamFullListResponse response = SteamService.getFullGameList();
 		_fullSteamGameSet = response.applist.apps.app;
