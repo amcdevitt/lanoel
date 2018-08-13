@@ -4,22 +4,19 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
+import com.omegasixcloud.contracts.accounts.UserAccount;
 import computer.lanoel.communication.LANoelAuth;
 import computer.lanoel.communication.User;
-import computer.lanoel.communication.UserAccount;
 import computer.lanoel.communication.UserAccountManagerClient;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Place;
 import computer.lanoel.contracts.Tournaments.Lanoel.Round;
 import computer.lanoel.contracts.Tournaments.Lanoel.TournamentLanoel;
-import computer.lanoel.contracts.Tournaments.Tournament;
 import computer.lanoel.contracts.Tournaments.TournamentParticipant;
 import computer.lanoel.exceptions.BadRequestException;
-import computer.lanoel.exceptions.InvalidSessionException;
 import computer.lanoel.platform.database.GameDatabase;
 import computer.lanoel.platform.database.PersonDatabase;
 import computer.lanoel.platform.database.TournamentLanoelDatabase;
-import computer.lanoel.platform.database.VoteDatabase;
 
 public class LanoelManager {
 
@@ -28,6 +25,7 @@ public class LanoelManager {
 	private GameDatabase _gameDb = new GameDatabase();
 	private PersonDatabase _personDb = new PersonDatabase();
 	private static UserAccountManagerClient _accountManager = new UserAccountManagerClient(ServiceConstants.accountServiceBaseUrl);
+	private String _sessionid;
 	
 	public LanoelManager(User user) throws Exception
 	{
@@ -49,6 +47,7 @@ public class LanoelManager {
 		try
 		{
 			uAcct = _accountManager.getUserAccount(user.getSessionId());
+			_sessionid = user.getSessionId();
 		} catch (Exception e)
 		{
 			System.out.println("User Not logged in.");
@@ -58,7 +57,7 @@ public class LanoelManager {
 	
 	public String getSessionIdForUser()
 	{
-		return _user.getUser().getSessionId();
+		return _sessionid;
 	}
 	
 	public Long createTournament(String tournamentName) throws Exception

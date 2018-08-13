@@ -4,9 +4,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.omegasixcloud.contracts.accounts.UserAccount;
 import computer.lanoel.communication.LANoelAuth;
 import computer.lanoel.communication.User;
-import computer.lanoel.communication.UserAccount;
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Suggestion;
@@ -27,6 +27,7 @@ public class PreEventManager {
 	private VoteDatabase _voteDb = new VoteDatabase();
 	private GameDatabase _gameDb = new GameDatabase();
 	private PersonDatabase _personDb = new PersonDatabase();
+	private String _sessionid;
 	
 	private static final String VOTE_CUTOFF_TIME = "2017-11-05T06:00"; // yyyy-MM-dd'T'HH:mm
 	
@@ -37,6 +38,7 @@ public class PreEventManager {
 			if(user != null && user.getSessionId() != null)
 			{
 				_user = LANoelAuth.loggedInUser(user.getSessionId());
+				_sessionid = user.getSessionId();
 			}
 		} catch (Exception e)
 		{
@@ -50,14 +52,14 @@ public class PreEventManager {
 	
 	public String getSessionIdForUser()
 	{
-		return _user == null ? null : _user.getUser().getSessionId();
+		return _sessionid;
 	}
 	
 	public List<Vote> vote(Vote vote, Long personKey) throws Exception
 	{
 		if(_user == null)
 		{
-			throw new InvalidSessionException("User not logged in!", _user.getUser().getSessionId());
+			throw new InvalidSessionException("User not logged in!", _sessionid);
 		}
 		
 		if(SteamCache.instance().getUserFromUserAccount(_user).getPersonKey() != personKey)
@@ -151,12 +153,16 @@ public class PreEventManager {
 			.filter(g -> gameNameFilter(g.getGameName()).equals(filteredGameName))
 			.collect(Collectors.toList()).get(0);
 			
-			String steamGameName = SteamCache.instance().getFullSteamGameList().stream()
+			List<String> steamGameNames = SteamCache.instance().getFullSteamGameList().stream()
 					.filter(g -> gameNameFilter(g.getName()).equals(filteredGameName))
 					.map(g -> g.getName())
-					.collect(Collectors.toList()).get(0);
-			game.setGameKey(cachedGame.getGameKey());
-			game.setGameName((steamGameName == null || steamGameName == "") ? cachedGame.getGameName() : steamGameName);
+					.collect(Collectors.toList());
+			if(steamGameNames.size() == 1)
+            {
+                String steamGameName = steamGameNames.get(0);
+                game.setGameKey(cachedGame.getGameKey());
+                game.setGameName((steamGameName == null || steamGameName == "") ? cachedGame.getGameName() : steamGameName);
+            }
 		}
     	
     	if(game.getGameKey() == null)
@@ -185,10 +191,10 @@ public class PreEventManager {
 	{
 		if(_user == null)
 		{
-			throw new InvalidSessionException("User not logged in!", _user.getUser().getSessionId());
+			throw new InvalidSessionException("User not logged in!", getSessionIdForUser());
 		}
 		
-		String userName = _user.getUserName();
+		String userName = _user.getUsername();
 		return SteamCache.instance().getPersonList()
 				.stream().filter(p -> p.getUserName() == userName).collect(Collectors.toList()).get(0);
 	}

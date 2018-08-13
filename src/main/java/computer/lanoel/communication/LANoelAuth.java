@@ -1,15 +1,10 @@
 package computer.lanoel.communication;
 
-import java.util.ArrayList;
+import com.omegasixcloud.contracts.accounts.UserAccount;
+import computer.lanoel.platform.ServiceConstants;
+
 import java.util.Arrays;
 import java.util.List;
-
-import org.springframework.core.annotation.Order;
-
-import computer.lanoel.exceptions.InvalidSessionException;
-import computer.lanoel.platform.Helper;
-import computer.lanoel.platform.ServiceConstants;
-import computer.lanoel.platform.ServiceUtils;
 
 public class LANoelAuth
 {
@@ -26,7 +21,7 @@ public class LANoelAuth
 	{
 		try
 		{
-			return ADMIN_USERS.contains(user.getUserName());
+			return ADMIN_USERS.contains(user.getUsername());
 			
 		} catch (Exception e)
 		{

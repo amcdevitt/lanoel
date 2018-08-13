@@ -1,31 +1,28 @@
 package computer.lanoel.communication;
 
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.Unirest;
+import com.omegasixcloud.contracts.accounts.UserAccount;
 
 public class UserAccountManagerClient
 {
 	private String BaseUrl;
+	private Gson _gson;
 	
 	public UserAccountManagerClient(String baseUrl)
 	{
+		_gson = new GsonBuilder().create();
 		BaseUrl = baseUrl;
 	}
 	
 	public UserAccount getUserAccount(String sessionid) throws Exception
 	{
 		String url = BaseUrl + "/accounts/user";
-		RestTemplate restTemplate = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("sessionid", sessionid);
-		HttpEntity<String> entity = new HttpEntity<String>(null, headers);
-		
-		ResponseEntity<UserAccount> response = restTemplate.exchange(url, HttpMethod.GET, entity, UserAccount.class);
-		UserAccount uAcct = response.getBody();
-		uAcct.setUser(new User(null, response.getHeaders().get("sessionid").get(0)));
-		return uAcct;
+		HttpResponse<String> res = Unirest.get(url)
+				.header("sessionid", sessionid)
+				.asString();
+		return _gson.fromJson(res.getBody(), UserAccount.class);
 	}
 }

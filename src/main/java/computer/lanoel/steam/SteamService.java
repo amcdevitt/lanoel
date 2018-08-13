@@ -1,9 +1,12 @@
 package computer.lanoel.steam;
 
+import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 
@@ -11,7 +14,6 @@ import computer.lanoel.platform.ServiceConstants;
 import computer.lanoel.steam.models.PlayerGameListResponse;
 import computer.lanoel.steam.models.SteamFullListResponse;
 import computer.lanoel.steam.models.SteamGameInformationResponse;
-import computer.lanoel.steam.models.SteamGameInformationResponseHeader;
 import computer.lanoel.steam.models.SteamPlayerSummaryResponse;
 
 public class SteamService {
@@ -54,6 +56,9 @@ public class SteamService {
 	{
 		String url = fullGameInformationUrl + "?appids=" + appId;
 		HttpResponse<String> res = Unirest.get(url).asString();
-		return _gson.fromJson(res.getBody(), SteamGameInformationResponse.class);
+
+        Type mapType = new TypeToken<Map<String,SteamGameInformationResponse>>(){}.getType();
+        Map<String,SteamGameInformationResponse> resObj = _gson.fromJson(res.getBody(), mapType);
+		return resObj.get(appId.toString());
 	}
 }

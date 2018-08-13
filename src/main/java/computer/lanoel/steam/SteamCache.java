@@ -1,12 +1,11 @@
 package computer.lanoel.steam;
 
 import java.math.BigDecimal;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import computer.lanoel.communication.UserAccount;
+import com.omegasixcloud.contracts.accounts.UserAccount;
 import computer.lanoel.contracts.Game;
 import computer.lanoel.contracts.Person;
 import computer.lanoel.contracts.Vote;
@@ -264,7 +263,7 @@ public class SteamCache {
 	
 	public Person getUserFromUserAccount(UserAccount uAcct)
 	{
-		 return _personCache.stream().filter(p -> p.getUserName().equals(uAcct.getUserName()))
+		 return _personCache.stream().filter(p -> p.getUserName().equals(uAcct.getUsername()))
 				 .collect(Collectors.toList()).get(0);
 	}
 	
