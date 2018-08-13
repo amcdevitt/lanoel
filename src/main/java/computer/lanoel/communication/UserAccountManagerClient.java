@@ -5,6 +5,9 @@ import com.google.gson.GsonBuilder;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.omegasixcloud.contracts.accounts.UserAccount;
+import computer.lanoel.json.serialization.DateSerializer;
+
+import java.util.Calendar;
 
 public class UserAccountManagerClient
 {
@@ -13,7 +16,7 @@ public class UserAccountManagerClient
 	
 	public UserAccountManagerClient(String baseUrl)
 	{
-		_gson = new GsonBuilder().create();
+		_gson = new GsonBuilder().registerTypeAdapter(Calendar.class, new DateSerializer()).create();
 		BaseUrl = baseUrl;
 	}
 	
