@@ -15,6 +15,7 @@ import computer.lanoel.steam.models.PlayerGameListResponse;
 import computer.lanoel.steam.models.SteamFullListResponse;
 import computer.lanoel.steam.models.SteamGameInformationResponse;
 import computer.lanoel.steam.models.SteamPlayerSummaryResponse;
+import org.apache.commons.lang3.StringUtils;
 
 public class SteamService {
 
@@ -35,7 +36,7 @@ public class SteamService {
 	{
 		String url = playerSummaryUrl + "?key=" + ServiceConstants.steamAPIkey;
 		url += "&steamids=";
-		url += org.parboiled.common.StringUtils.join(steamIds, ",");
+		url += StringUtils.join(steamIds, ",");
 
 		HttpResponse<String> res = Unirest.get(url).asString();
 		return _gson.fromJson(res.getBody(), SteamPlayerSummaryResponse.class);
