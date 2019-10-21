@@ -29,7 +29,7 @@ public class PreEventManager {
 	private PersonDatabase _personDb = new PersonDatabase();
 	private String _sessionid;
 	
-	private static final String VOTE_CUTOFF_TIME = "2018-11-05T06:00"; // yyyy-MM-dd'T'HH:mm
+	private static final String VOTE_CUTOFF_TIME = "2019-10-26T06:00"; // yyyy-MM-dd'T'HH:mm
 	
 	public PreEventManager(User user) throws Exception
 	{
