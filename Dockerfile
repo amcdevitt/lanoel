@@ -1,4 +1,4 @@
-FROM openjdk:14-jdk-alpine
+FROM openjdk:14-jdk
 MAINTAINER amcdevitt@gmail.com
 
 ENV DEBIAN_FRONTEND noninteractive
