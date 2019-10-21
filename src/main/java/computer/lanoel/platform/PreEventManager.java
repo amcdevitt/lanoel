@@ -90,10 +90,6 @@ public class PreEventManager {
     	}
     	
     	Calendar currentTime = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"));
-    	if(currentTime.after(_voteCutoffTime))
-    	{
-    		throw new BadRequestException("Voting ended!");
-    	}
     	
     	List<Vote> votesForPerson = _voteDb.getVotesForPerson(vote.getPersonKey());
     	if(votesForPerson == null || votesForPerson.isEmpty())
