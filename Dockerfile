@@ -1,4 +1,4 @@
-FROM openjdk:14-jdk
+FROM openjdk:14-jdk-buster
 MAINTAINER amcdevitt@gmail.com
 
 ENV DEBIAN_FRONTEND noninteractive
