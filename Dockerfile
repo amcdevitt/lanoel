@@ -3,7 +3,7 @@ MAINTAINER amcdevitt@gmail.com
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get install -y maven
+RUN apt-get update && apt-get install -y maven
 
 #RUN update-java-alternatives -s java-1.8.0-openjdk-amd64
 RUN java -version
